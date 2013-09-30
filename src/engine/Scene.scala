@@ -8,6 +8,7 @@ import scala.math.{Pi}
 import rendering.Renderer._
 import scala.Some
 import collection.mutable
+import perf.Perf.perfed
 
 class Scene extends Tickable {
   
@@ -22,7 +23,7 @@ class Scene extends Tickable {
     wireframes += drawable
   }
   
-  def addGrowable(growable: Growable) {
+  def addGrowable(growable: Growable) = perfed("addGrowable") {
     val touching = growables.get(growable.touching)
     // hidden faces are noted as such
     touching match {

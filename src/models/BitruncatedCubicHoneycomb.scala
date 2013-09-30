@@ -6,9 +6,10 @@ import Honeycomb._
 class BitruncatedCubicHoneycomb extends Honeycomb {
 
   import BitruncatedCubicHoneycomb.TruncatedOctahedron
+  import perf.Perf.perfed
   
-  def polyhedron(i: Int, j: Int, k: Int, polyId: Int): Polyhedron = TruncatedOctahedron(i,j,k)
-  def polyhedrons(i: Int, j: Int, k: Int): Iterable[Polyhedron] = Iterable(TruncatedOctahedron(i,j,k))
+  def polyhedron(i: Int, j: Int, k: Int, polyId: Int): Polyhedron = perfed("poly") {new TruncatedOctahedron(i,j,k)}
+  def polyhedrons(i: Int, j: Int, k: Int): Iterable[Polyhedron] = perfed("polys") {Iterable(new TruncatedOctahedron(i,j,k))}
 }
 
 object BitruncatedCubicHoneycomb {
@@ -156,7 +157,7 @@ object BitruncatedCubicHoneycomb {
   }
   import Faces._
   
-  case class TruncatedOctahedron(val i: Int, val j: Int, val k: Int) extends Polyhedron {
+  class TruncatedOctahedron(val i: Int, val j: Int, val k: Int) extends Polyhedron {
     val sourcePolyhedron = TruncatedOctahedron0
     
     import engine.Math.%+

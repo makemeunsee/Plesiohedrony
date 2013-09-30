@@ -6,6 +6,7 @@ import Renderer._
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11._
 import org.lwjgl.opengl.Display
+import perf.Perf.perfed
 
 abstract class Renderer(val scene: Scene, var width: Int, var height: Int) {
   def init: Unit
@@ -46,8 +47,7 @@ class DefaultRenderer(scene: Scene, width: Int, height: Int) extends Renderer(sc
     glLightBuff(GL_LIGHT0, GL_AMBIENT, Array(0.1f,0.1f,0.4f,0))
   }
 
-
-  def render(picking: Boolean = false, lastHit: Option[ID] = None): Option[ID] = {
+  def render(picking: Boolean = false, lastHit: Option[ID] = None): Option[ID] = perfed ("render") {
     if (picking) {
       glEnable(GL_DEPTH_TEST)
       glDisable(GL_LIGHTING)
@@ -62,10 +62,8 @@ class DefaultRenderer(scene: Scene, width: Int, height: Int) extends Renderer(sc
       scene.camera.setIn3D
 
       glBegin(GL_TRIANGLES)
-      val inRange = Picking.filter(visibles.values, scene.camera.position)
-      //Perf.perfed {
+      val inRange = perfed("visible") { Picking.filter(visibles.values, scene.camera.position) }
       inRange.foreach(e => e._2.renderPicking(e._1))
-      //}
       glEnd
 
       glPopMatrix

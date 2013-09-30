@@ -10,6 +10,7 @@ import Ticker.Tickable
 import org.lwjgl.opengl.GL11._
 import scala.Some
 import engine.rendering.{CaveRenderer, DefaultRenderer}
+import perf.Perf
 
 object Demo extends Tickable {
   
@@ -36,17 +37,27 @@ object Demo extends Tickable {
     }
     init(fullscreen)
     
+    import Perf.perfed
+    
     // fill scene
     //Shapes.heavyBubble.foreach(scene.addGrowable)
-    Shapes.beautyBubble.foreach(scene.addGrowable)
-    Shapes.gridFloor(20).foreach(scene.addWireframe)
+    perfed("beautybubble") {
+     Shapes.beautyBubble.foreach(scene.addGrowable)
+    }
+    perfed("grid floor") {
+      Shapes.gridFloor(20).foreach(scene.addWireframe)
+    }
     //Shapes.floor(10, 0).foreach(scene.addGrowable)
     //Shapes.at(0,0,0).foreach(scene.addGrowable)
     //Shapes.at(1,1,1).foreach(scene.addGrowable)
-    Shapes.dome(10).foreach(scene.addGrowable)
+    perfed("dome") {
+      Shapes.dome(10).foreach(scene.addGrowable)
+    }
     //Shapes.wall(10,10).foreach(scene.addGrowable)
-    //Shapes.mcChunk.foreach(scene.addGrowable)
-
+//    perfed("mcchunk") {
+//      Shapes.mcChunk.foreach(scene.addGrowable)
+//    }
+    
     val sun = new Renderable with Tickable {
       var sunAngle = 0d
       val sunDistance = 100
@@ -191,6 +202,7 @@ object Demo extends Tickable {
       Display.sync(FRAMERATE)
     }
     Ticker.exiting = true
+    Perf.printResults
   }
   
   def tick(t: Int) {

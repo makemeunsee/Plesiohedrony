@@ -1,11 +1,29 @@
 package perf
 
+import scala.collection.mutable.HashMap
+
 object Perf {
   
+  val calls = new HashMap[String, (Int, Long)]
+  
   def perfed[R](name: String = "")(f: => R) = {
-    val t0 = System.currentTimeMillis
+    val t0 = System.nanoTime
     val res = f
-    println(System.currentTimeMillis - t0)
+    val lapse = (System.nanoTime - t0)
+    if(name != "") {
+      calls.get(name) match {
+        case Some((c, l)) => calls += ((name, (c+1, l+lapse)))
+        case _ => calls += ((name, (1, lapse)))
+      }
+    } else {
+      println(lapse)
+    }
     res
+  }
+  
+  def printResults {
+    calls.foreach { case (name, (count, timeSpent)) =>
+      println(s"Called $name $count times, spending ${timeSpent/1000000} ms, average: ${timeSpent/1000000/count} ms/call")
+    }
   }
 }

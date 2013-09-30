@@ -15,10 +15,11 @@ object Picking {
   
   val limit = 50f // m², square of the distance within which picking is active
   
-  def filter[T <: Pickable](pickables: Iterable[T], origin: Point3f): Map[Color3B, T] =
+  def filter[T <: Pickable](pickables: Iterable[T], origin: Point3f): Map[Color3B, T] = perf.Perf.perfed("picking") {
     pickables.filter(p => squareDistanceTo(origin, p.center) < limit)
              .zipWithIndex.toMap
              .map(e => (intToColor(e._2+1), e._1))
+  }
              
              // TODO test
 //  {

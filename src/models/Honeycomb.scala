@@ -40,8 +40,8 @@ object Honeycomb {
     override def toString = s"($x, $y, $z)"
   }
   
-  trait Polygon extends Iterable[Point3f] {
-    protected val points: Iterable[Point3f]
+  abstract class Polygon(pts: Iterable[Point3f]) extends Iterable[Point3f] {
+    protected val points = pts.take(size).toArray
     def size: Int
     def translate(vector: Point3f): Polygon
     def pointSymetry(p: Point3f): Polygon
@@ -60,18 +60,16 @@ object Honeycomb {
     def iterator = points.iterator
   }
   
-  class Triangle(val p1: Point3f, val p2: Point3f, val p3: Point3f) extends Polygon {
-    override val size = 3
-    override protected val points = List(p1, p2, p3)
+  class Triangle(val p1: Point3f, val p2: Point3f, val p3: Point3f) extends Polygon(List(p1,p2,p3)) {
+    override def size = 3
     def translate(vector: Point3f) = new Triangle(p1 + vector, p2 + vector, p3 + vector)
     def toTriangles = Iterable((p1, p2, p3))
     def pointSymetry(p: Point3f) = new Triangle(p - (p1-p),p - (p2-p),p - (p3-p))
     def reverse = new Triangle(p3, p2, p1)
   }
   
-  class Quad(pts: Iterable[Point3f]) extends Polygon {
-    override val size = 4
-    override protected val points = pts.take(size)
+  class Quad(pts: Iterable[Point3f]) extends Polygon(pts) {
+    override def size = 4
     def translate(vector: Point3f) = new Quad(map(_ + vector))
     def toTriangles = {
       val arr = toArray
@@ -81,9 +79,8 @@ object Honeycomb {
     def reverse = new Quad(toList.reverse)
   }
   
-  class Hexad(pts: Iterable[Point3f]) extends Polygon {
-    override val size = 6
-    override protected val points = pts.take(size)
+  class Hexad(pts: Iterable[Point3f]) extends Polygon(pts) {
+    override def size = 6
     override val center = super.center
     def translate(vector: Point3f) = new Hexad(map(_ + vector))
     def toTriangles = {
