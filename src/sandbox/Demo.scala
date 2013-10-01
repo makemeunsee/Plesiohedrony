@@ -4,7 +4,7 @@ import org.lwjgl.opengl.{ Display, DisplayMode }
 import org.lwjgl.input._
 import locale.Keys
 import math._
-import engine.rendering.Renderer.{Renderable, ID, glLightBuff}
+import engine.rendering.Renderer.{Renderable, SpecialRenderable, ID, glLightBuff}
 import engine.{Scene, Ticker, Camera}
 import Ticker.Tickable
 import org.lwjgl.opengl.GL11._
@@ -22,8 +22,11 @@ object Demo extends Tickable {
   
   val updateDelay = 200 // ms
   
-  val scene = new Scene
-  val renderer = new DefaultRenderer(scene, width, height)//new CaveRenderer(scene, width, height)
+  // set scale to 1 for improved performance
+  Shapes.scale = 0.85f
+  val scene = new Scene(Shapes.scale == 1f)
+  val renderer = new DefaultRenderer(scene, width, height)
+  //new CaveRenderer(scene, width, height)
     
   var finished = false
 
@@ -48,17 +51,17 @@ object Demo extends Tickable {
       Shapes.gridFloor(20).foreach(scene.addWireframe)
     }
     //Shapes.floor(10, 0).foreach(scene.addGrowable)
-    //Shapes.at(0,0,0).foreach(scene.addGrowable)
-    //Shapes.at(1,1,1).foreach(scene.addGrowable)
+//    Shapes.at(0,0,0).foreach(scene.addGrowable)
+//    Shapes.at(1,1,1).foreach(scene.addGrowable)
     perfed("dome") {
       Shapes.dome(10).foreach(scene.addGrowable)
     }
-    //Shapes.wall(10,10).foreach(scene.addGrowable)
+//    Shapes.wall(10,10).foreach(scene.addGrowable)
 //    perfed("mcchunk") {
 //      Shapes.mcChunk.foreach(scene.addGrowable)
 //    }
     
-    val sun = new Renderable with Tickable {
+    val sun = new SpecialRenderable with Tickable {
       var sunAngle = 0d
       val sunDistance = 100
       val sunSize = 10
@@ -94,21 +97,22 @@ object Demo extends Tickable {
         glLightBuff(GL_LIGHT0, GL_POSITION, Array(0f,0,1,0))
         //    glLightBuff(GL_LIGHT0, GL_AMBIENT, Array(0f,0,0,0))
         //    glLightBuff(GL_LIGHT0, GL_SPECULAR, Array(0f,0,0,0))
-        glLightBuff(GL_LIGHT0, GL_DIFFUSE, Array(1f,1,1,0))
+        glLightBuff(GL_LIGHT0, GL_DIFFUSE, Array(0.8f,0.4f,0.2f,0))
 
         glPopMatrix
       }
     }
 
-    val moon = new Renderable {
+    val moon = new SpecialRenderable {
       val moonDistance = 100
       val moonSize = 10
+      val angle = 1.5f
+      val x = moonDistance*sin(angle).toFloat
+      val y = moonDistance*cos(angle).toFloat
+      
       def render {
         glPushMatrix
 
-        val angle = 1.5f
-        val x = moonDistance*sin(angle).toFloat
-        val y = moonDistance*cos(angle).toFloat
         glTranslatef(x,0,y)
         glRotatef(angle.toDegrees.toFloat,0,1,0)
 
@@ -214,10 +218,7 @@ object Demo extends Tickable {
     val dx = Mouse.getDX
     val dy = Mouse.getDY
     
-    cam.pitch += dx * 0.01d
-    cam.yaw += dy * 0.01d
-    if (cam.yaw > Pi) cam.yaw = Pi
-    if (cam.yaw < 0) cam.yaw = 0
+    cam.setPitchAndYaw(cam.getPitch + dx * 0.01d, cam.getYaw + dy * 0.01d)
     
 //    if ( dy != 0 || dx != 0 )
 //      println(s"$dx - $dy")
@@ -225,7 +226,7 @@ object Demo extends Tickable {
     // keyboard events
     import Keys._
     import Keyboard.isKeyDown
-
+    
     finished = Display.isCloseRequested || isKeyDown(ESC)
 
     val move_forward = isKeyDown(FORWARD)
@@ -236,7 +237,7 @@ object Demo extends Tickable {
     val move_down = isKeyDown(DOWN)
     val move_fast = isKeyDown(RUN)
 
-    val moveAngle = cam.pitch + {
+    val moveAngle = cam.getPitch + {
       (move_forward, move_back, move_left, move_right) match {
         case (true, _, true, _) => -Math.PI / 4
         case (true, _, false, true) => Math.PI / 4

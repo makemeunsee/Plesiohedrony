@@ -3,30 +3,30 @@ package sandbox
 import models.{Honeycomb, TetraOctaHoneycomb, GyratedTetraOctaHoneycomb, BitruncatedCubicHoneycomb, CubicHoneycomb, TriakisTruncatedTetraHoneycomb}
 import Honeycomb.{Polyhedron}
 import engine.rendering.Renderer.{Renderable}
+import engine.rendering.Picking.Color3B
 import org.lwjgl.opengl.GL11.glColor3f
-import DefaultGrowable.{polyhedronToGrowables => pTG, drawTriangle}
+import DefaultGrowable.{polyhedronToGrowables => pTG}
 
 object Shapes {
   
   val honeyComb = new BitruncatedCubicHoneycomb
   
-  val polyhedronToGrowables = pTG(honeyComb)(_)
+  var scale = 1f
+  
+  val polyhedronToGrowables = pTG(honeyComb, scale)(_)
   
   // full bubble (heavy)
   def heavyBubble = bubble(20, 4f)
   // nice patterns bubble
   def beautyBubble = bubble(30, 2f)
   
+  val LIGHT_GREEN = new Color3B(50, -50, 0)
+  
   def gridFloor(span: Int) = TetraOctaHoneycomb.Grid.triangles(span).map(
       t => new Renderable {
-        val renderables = t.toTriangles
-
-        override def render() {
-          glColor3f(0.2f, 0.8f, 0)
-          renderables.map(drawTriangle)
-        }
-
-        def renderContour = renderables.map(drawTriangle)
+        override val toTriangles = t.toTriangles
+        def toContour = t
+        def color = LIGHT_GREEN
       }
     )
     

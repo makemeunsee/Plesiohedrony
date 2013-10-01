@@ -1,7 +1,7 @@
 package engine.rendering
 
 import org.lwjgl.opengl.GL11._
-import models.Honeycomb.Point3f
+import models.{Point3f}
 import engine.Math.usB2sB
 import org.lwjgl.BufferUtils
 

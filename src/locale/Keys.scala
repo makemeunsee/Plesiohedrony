@@ -8,12 +8,12 @@ object Keys {
   
   private val inputLocale = InputContext.getInstance.getLocale
   
-  private val defaults = (KEY_W, KEY_S, KEY_A, KEY_D, KEY_LSHIFT, KEY_SPACE, KEY_LCONTROL, KEY_E, KEY_F, KEY_ESCAPE)
+  private val defaults = (KEY_W, KEY_S, KEY_A, KEY_D, KEY_LSHIFT, KEY_SPACE, KEY_LCONTROL, KEY_E, KEY_F12, KEY_ESCAPE)
   
   private val asTuple = inputLocale.toString.toLowerCase match {
     // TODO find more reliable way to detect keyboard layout...
     //case "fr_ch" => defaults
-    //case "fr_fr" => (KEY_Z, KEY_S, KEY_Q, KEY_D, KEY_LSHIFT, KEY_SPACE, KEY_LCONTROL, KEY_E, KEY_F, KEY_ESCAPE)
+    //case "fr_fr" => (KEY_Z, KEY_S, KEY_Q, KEY_D, KEY_LSHIFT, KEY_SPACE, KEY_LCONTROL, KEY_E, KEY_F12, KEY_ESCAPE)
     case _ => defaults
   }
   

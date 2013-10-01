@@ -9,7 +9,7 @@ object Perf {
   def perfed[R](name: String = "")(f: => R) = {
     val t0 = System.nanoTime
     val res = f
-    val lapse = (System.nanoTime - t0)
+    val lapse = (System.nanoTime - t0) / 1000 // save microseconds
     if(name != "") {
       calls.get(name) match {
         case Some((c, l)) => calls += ((name, (c+1, l+lapse)))
@@ -23,7 +23,7 @@ object Perf {
   
   def printResults {
     calls.foreach { case (name, (count, timeSpent)) =>
-      println(s"Called $name $count times, spending ${timeSpent/1000000} ms, average: ${timeSpent/1000000/count} ms/call")
+      println(s"Called $name $count times, spending ${timeSpent/1000} ms, average: ${timeSpent/1000/count} ms/call")
     }
   }
 }

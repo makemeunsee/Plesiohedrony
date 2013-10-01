@@ -6,10 +6,9 @@ import Honeycomb._
 class BitruncatedCubicHoneycomb extends Honeycomb {
 
   import BitruncatedCubicHoneycomb.TruncatedOctahedron
-  import perf.Perf.perfed
   
-  def polyhedron(i: Int, j: Int, k: Int, polyId: Int): Polyhedron = perfed("poly") {new TruncatedOctahedron(i,j,k)}
-  def polyhedrons(i: Int, j: Int, k: Int): Iterable[Polyhedron] = perfed("polys") {Iterable(new TruncatedOctahedron(i,j,k))}
+  def polyhedron(i: Int, j: Int, k: Int, polyId: Int): Polyhedron = TruncatedOctahedron(i,j,k)
+  def polyhedrons(i: Int, j: Int, k: Int): Iterable[Polyhedron] = Iterable(TruncatedOctahedron(i,j,k))
 }
 
 object BitruncatedCubicHoneycomb {
@@ -157,7 +156,7 @@ object BitruncatedCubicHoneycomb {
   }
   import Faces._
   
-  class TruncatedOctahedron(val i: Int, val j: Int, val k: Int) extends Polyhedron {
+  case class TruncatedOctahedron(val i: Int, val j: Int, val k: Int) extends Polyhedron {
     val sourcePolyhedron = TruncatedOctahedron0
     
     import engine.Math.%+
@@ -183,4 +182,189 @@ object BitruncatedCubicHoneycomb {
         BottomSouthEastHexa)
     override lazy val center = new Point3f(0,0,0)
   }
+  
+//  object TOFaceCameraFilter {
+//
+//    
+//    def byPitchAndYaw(yaw: Double, pitch: Double) = byYaw(yaw).intersect(byPitch(pitch))
+//    
+//    private def byYaw(yaw: Double) = {
+//      if ( yaw == 0)
+//        HashSet(TopSquare.id,
+//          TopNorthEastHexa.id,
+//          TopNorthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          TopSouthEastHexa.id)
+//      else if ( yaw <= math.Pi / 4 )
+//        HashSet(TopSquare.id,
+//          NorthSquare.id,
+//          SouthSquare.id,
+//          EastSquare.id,
+//          WestSquare.id,
+//          TopNorthEastHexa.id,
+//          TopNorthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          TopSouthEastHexa.id)
+//      else if ( yaw < math.Pi / 2 )
+//        HashSet(TopSquare.id,
+//          NorthSquare.id,
+//          SouthSquare.id,
+//          EastSquare.id,
+//          WestSquare.id,
+//          TopNorthEastHexa.id,
+//          TopNorthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          TopSouthEastHexa.id,
+//          BottomNorthEastHexa.id,
+//          BottomNorthWestHexa.id,
+//          BottomSouthWestHexa.id,
+//          BottomSouthEastHexa.id)
+//      else if ( yaw == math.Pi / 2 )
+//        HashSet(NorthSquare.id,
+//          SouthSquare.id,
+//          EastSquare.id,
+//          WestSquare.id,
+//          TopNorthEastHexa.id,
+//          TopNorthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          TopSouthEastHexa.id,
+//          BottomNorthEastHexa.id,
+//          BottomNorthWestHexa.id,
+//          BottomSouthWestHexa.id,
+//          BottomSouthEastHexa.id)
+//      else if ( yaw < 3 * math.Pi / 4 )
+//        HashSet(BottomSquare.id,
+//          NorthSquare.id,
+//          SouthSquare.id,
+//          EastSquare.id,
+//          WestSquare.id,
+//          TopNorthEastHexa.id,
+//          TopNorthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          TopSouthEastHexa.id,
+//          BottomNorthEastHexa.id,
+//          BottomNorthWestHexa.id,
+//          BottomSouthWestHexa.id,
+//          BottomSouthEastHexa.id)
+//      else if ( yaw < math.Pi )
+//        HashSet(BottomSquare.id,
+//          NorthSquare.id,
+//          SouthSquare.id,
+//          EastSquare.id,
+//          WestSquare.id,
+//          BottomNorthEastHexa.id,
+//          BottomNorthWestHexa.id,
+//          BottomSouthWestHexa.id,
+//          BottomSouthEastHexa.id)
+//     else // yaw == math.Pi
+//       HashSet(BottomSquare.id,
+//          BottomNorthEastHexa.id,
+//          BottomNorthWestHexa.id,
+//          BottomSouthWestHexa.id,
+//          BottomSouthEastHexa.id)
+//    }
+//    
+//    private def byPitch(pitch: Double) = HashSet(TopSquare.id, BottomSquare.id) ++ {
+//      if ( pitch == 0)
+//        HashSet(SouthSquare.id,
+//          BottomSouthWestHexa.id,
+//          BottomSouthEastHexa.id,
+//          TopSouthWestHexa.id,
+//          TopSouthEastHexa.id)
+//      else if ( pitch < math.Pi / 4 )
+//        HashSet(SouthSquare.id,
+//          BottomSouthWestHexa.id,
+//          BottomSouthEastHexa.id,
+//          TopSouthWestHexa.id,
+//          TopSouthEastHexa.id,
+//          WestSquare.id)
+//      else if ( pitch == math.Pi / 4 )
+//        HashSet(SouthSquare.id,
+//          BottomSouthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          WestSquare.id)
+//      else if ( pitch < math.Pi / 2 )
+//        HashSet(SouthSquare.id,
+//          BottomSouthWestHexa.id,
+//          BottomNorthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          TopNorthWestHexa.id,
+//          WestSquare.id)
+//      else if ( pitch == math.Pi / 2 )
+//        HashSet(BottomSouthWestHexa.id,
+//          BottomNorthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          TopNorthWestHexa.id,
+//          WestSquare.id)
+//      else if ( pitch < 3 * math.Pi / 4 )
+//        HashSet(BottomSouthWestHexa.id,
+//          BottomNorthWestHexa.id,
+//          TopSouthWestHexa.id,
+//          TopNorthWestHexa.id,
+//          WestSquare.id,
+//          NorthSquare.id)
+//      else if ( pitch == 3 * math.Pi / 4 )
+//        HashSet(BottomNorthWestHexa.id,
+//          TopNorthWestHexa.id,
+//          WestSquare.id,
+//          NorthSquare.id)
+//      else if ( pitch < math.Pi )
+//        HashSet(BottomNorthWestHexa.id,
+//          BottomNorthEastHexa.id,
+//          TopNorthWestHexa.id,
+//          TopNorthEastHexa.id,
+//          WestSquare.id,
+//          NorthSquare.id)
+//      else if ( pitch == math.Pi )
+//        HashSet(BottomNorthWestHexa.id,
+//          BottomNorthEastHexa.id,
+//          TopNorthWestHexa.id,
+//          TopNorthEastHexa.id,
+//          NorthSquare.id)
+//      else if ( pitch < 5 * math.Pi / 4 )
+//        HashSet(BottomNorthWestHexa.id,
+//          BottomNorthEastHexa.id,
+//          TopNorthWestHexa.id,
+//          TopNorthEastHexa.id,
+//          NorthSquare.id,
+//          EastSquare.id)
+//      else if ( pitch == 5 * math.Pi / 4 )
+//        HashSet(BottomNorthEastHexa.id,
+//          TopNorthEastHexa.id,
+//          NorthSquare.id,
+//          EastSquare.id)
+//      else if ( pitch < 3 * math.Pi / 2 )
+//        HashSet(BottomNorthEastHexa.id,
+//          BottomSouthEastHexa.id,
+//          TopNorthEastHexa.id,
+//          TopSouthEastHexa.id,
+//          NorthSquare.id,
+//          EastSquare.id)
+//      else if ( pitch == 3 * math.Pi / 2 )
+//        HashSet(BottomNorthEastHexa.id,
+//          BottomSouthEastHexa.id,
+//          TopNorthEastHexa.id,
+//          TopSouthEastHexa.id,
+//          EastSquare.id)
+//      else if ( pitch < 7 * math.Pi / 4 )
+//        HashSet(BottomNorthEastHexa.id,
+//          BottomSouthEastHexa.id,
+//          TopNorthEastHexa.id,
+//          TopSouthEastHexa.id,
+//          EastSquare.id,
+//          SouthSquare.id)
+//      else if ( pitch == 7 * math.Pi / 4 )
+//        HashSet(BottomSouthEastHexa.id,
+//          TopNorthEastHexa.id,
+//          EastSquare.id,
+//          SouthSquare.id)
+//      else // ( pitch < 2 * math.Pi )
+//        HashSet(BottomSouthEastHexa.id,
+//          BottomSouthWestHexa.id,
+//          TopSouthEastHexa.id,
+//          TopSouthWestHexa.id,
+//          EastSquare.id,
+//          SouthSquare.id)
+//    }
+//  }
 }
