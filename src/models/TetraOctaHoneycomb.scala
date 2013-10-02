@@ -1,6 +1,6 @@
 package models
 
-import engine.Math.SQRTS
+import util.Math.SQRTS
 import SQRTS._
 import Honeycomb._
   

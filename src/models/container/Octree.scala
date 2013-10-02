@@ -1,18 +1,13 @@
 package models.container
 
 object Octree {
-  type Bounds = (Int, Int, Int, Int, Int, Int)
-
   val maxDepth = 15
-  val width = math.pow(2, maxDepth+1).toInt //width of the cube-shaped space covered by an octree
-  val minWidth = new OctreeLeaf[Boundable]((0,0,0)).width
+  // width of a leaf
+  val minWidth = 2
+  // width of the cube-shaped space covered by an octree
+  val width = 2*math.pow(2, maxDepth).toInt
 }
 import Octree._
-import collection.immutable
-
-trait Boundable {
-  def within(bounds: Bounds): Boolean
-}
 
 // immutable octree
 trait Octree[T <: Boundable] {
@@ -26,6 +21,9 @@ trait Octree[T <: Boundable] {
   def values: Set[T]
   def addValue(t: T): Octree[T]
   def +(t: T) = addValue(t)
+  def removeValue(t: T): Octree[T]
+  def -(t: T) = removeValue(t)
+  def empty: Boolean
   def contains(t: T) = t.within(bounds)
 
   def width = {
@@ -45,63 +43,4 @@ trait Octree[T <: Boundable] {
     List(new Point3f(bounds._1, bounds._3, bounds._5), new Point3f(bounds._1, bounds._4, bounds._5), new Point3f(bounds._2, bounds._4, bounds._5), new Point3f(bounds._2, bounds._3, bounds._5)),
     List(new Point3f(bounds._1, bounds._3, bounds._6), new Point3f(bounds._1, bounds._4, bounds._6), new Point3f(bounds._2, bounds._4, bounds._6), new Point3f(bounds._2, bounds._3, bounds._6))
   )
-}
-
-sealed class OctreeLeaf[T <: Boundable](val center: (Int, Int, Int),
-                           val values: Set[T] = new immutable.HashSet[T]) extends Octree[T] {
-
-  val depth = maxDepth
-
-  def addValue(t: T) =
-    if (contains(t))
-      new OctreeLeaf(center, values + t)
-    else
-      this
-
-  override def toString = s"Leaf $bounds"
-}
-
-sealed class OctreeNode[T <: Boundable](val center: (Int, Int, Int),
-                           val depth: Int,
-                           override val children: Option[Seq[Octree[T]]] = None) extends Octree[T] {
-
-  def values = children match {
-    case Some(kids) => kids.foldLeft(new immutable.HashSet[T]()){ (z,e) =>
-      z ++ e.values
-    }
-    case _ => new immutable.HashSet[T]()
-  }
-
-  def addValue(t: T) = {
-    if (contains(t)) {
-      children match {
-        case Some(kids) => new OctreeNode(center, depth, Some(kids.map(_.addValue(t))))
-        case _          => new OctreeNode(center, depth, Some(createChildren[T](center, depth).map(_.addValue(t))))
-      }
-    } else
-      this
-  }
-
-  private def createChildren[T <: Boundable](center: (Int, Int, Int), depth: Int): Seq[Octree[T]] = {
-    def creator(childCenter: (Int, Int, Int)): Octree[T] = {
-      val childDepth = depth + 1
-      if (childDepth < maxDepth)
-        new OctreeNode[T](childCenter, childDepth)
-      else if (childDepth == maxDepth)
-        new OctreeLeaf[T](childCenter)
-      else
-        throw new Error(s"requesting octree depth $childDepth > to max depth $maxDepth")
-    }
-    val diff = width / 4
-    List(creator((center._1 - diff, center._2 - diff, center._3 - diff)),
-      creator((center._1 - diff, center._2 - diff, center._3 + diff)),
-      creator((center._1 - diff, center._2 + diff, center._3 - diff)),
-      creator((center._1 - diff, center._2 + diff, center._3 + diff)),
-      creator((center._1 + diff, center._2 - diff, center._3 - diff)),
-      creator((center._1 + diff, center._2 - diff, center._3 + diff)),
-      creator((center._1 + diff, center._2 + diff, center._3 - diff)),
-      creator((center._1 + diff, center._2 + diff, center._3 + diff)))
-  }
-
-  override def toString = s"Node $bounds"
 }

@@ -2,25 +2,37 @@ package engine
 
 import org.lwjgl.opengl.GL11.{glRotatef, glTranslatef}
 import models.Point3f
+import scala.collection.mutable.HashSet
 
 // yaw: angle between (0,0,-1) and eyeVector
 // pitch: angle between plan(y = 0) and eyeVector
-class Camera(private var yaw: Double, private var pitch: Double, var x: Float, var y: Float, var z: Float) {
-  def setIn3D {
-    rotate
-    translate
+class Camera(private var yaw: Double, private var pitch: Double, private var x: Float, private var y: Float, private var z: Float) {
+  
+  def applyToWorld {
+    rotateWorld
+    translateWorld
   }
   
-  def rotate {
+  def rotateWorld {
     glRotatef(yaw.toDegrees.toFloat, -1f, 0, 0)
     glRotatef(pitch.toDegrees.toFloat, 0, 0, 1f)
   }
   
-  def translate {
+  def translateWorld {
     glTranslatef(-x, -y, -z)
   }
   
   def position = new Point3f(x,y,z)
+  
+  def getX = x
+  def getY = y
+  def getZ = z
+  
+  def setXYZ(newX: Float, newY: Float, newZ: Float) {
+    x = newX
+    y = newY
+    z = newZ
+  }
   
   def getPitch = pitch
   def getYaw = yaw

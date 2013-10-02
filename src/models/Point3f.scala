@@ -1,5 +1,6 @@
 package models
 
+// a 3D point / vector
 class Point3f(val x: Float, val y: Float, val z: Float) {
     def this(xd: Double, yd: Double, zd: Double) {
       this(xd.toFloat, yd.toFloat, zd.toFloat)
@@ -12,9 +13,15 @@ class Point3f(val x: Float, val y: Float, val z: Float) {
     
     def -(other: Point3f) = arithOp((x1, x2) => x1 - x2)(other)
     
+    // scalar product
     def *(other: Point3f) = {
       val prod = arithOp((x1, x2) => x1 * x2)(other)
       prod.x + prod.y + prod.z
+    }
+    
+    // cross product
+    def ^(other: Point3f) = {
+      new Point3f(y*other.z - z*other.y, z*other.x - x*other.z, x*other.y - y*other.x)
     }
     
     def square = this * this

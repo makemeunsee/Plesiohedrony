@@ -12,7 +12,8 @@ class BitruncatedCubicHoneycomb extends Honeycomb {
 }
 
 object BitruncatedCubicHoneycomb {
-  
+  import util.Math.%+
+
   private[models] object Points {
     case object TopSquareN    extends Point3f ( 0, 0.5, 1)
     case object TopSquareW    extends Point3f ( -0.5, 0, 1)
@@ -46,7 +47,6 @@ object BitruncatedCubicHoneycomb {
     trait BTHFace {
       def id: Int
       def opposite(i: Int, j: Int, k: Int) = {
-        import engine.Math.%+
         val s = %+(k,2) // on odd k levels, neighbors are shifted by one on the xy plan
         id match {
           case TopSquare.id           => FaceId(i,   j,   k+2, BottomSquare)
@@ -159,7 +159,6 @@ object BitruncatedCubicHoneycomb {
   case class TruncatedOctahedron(val i: Int, val j: Int, val k: Int) extends Polyhedron {
     val sourcePolyhedron = TruncatedOctahedron0
     
-    import engine.Math.%+
     def origin = new Point3f(i*2 + %+(k,2), j*2 + %+(k,2), k)
   }
   

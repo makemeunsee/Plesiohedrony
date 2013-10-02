@@ -2,7 +2,7 @@ package engine.rendering
 
 import org.lwjgl.opengl.GL11._
 import models.{Point3f}
-import engine.Math.usB2sB
+import util.Math.usB2sB
 import org.lwjgl.BufferUtils
 
 object Picking {

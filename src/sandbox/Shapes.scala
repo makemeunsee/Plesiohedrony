@@ -5,7 +5,7 @@ import Honeycomb.{Polyhedron}
 import engine.rendering.Renderer.{Renderable}
 import engine.rendering.Picking.Color3B
 import org.lwjgl.opengl.GL11.glColor3f
-import DefaultGrowable.{polyhedronToGrowables => pTG}
+import DefaultElement.{polyhedronToElements => pTE}
 
 object Shapes {
   
@@ -13,7 +13,7 @@ object Shapes {
   
   var scale = 1f
   
-  val polyhedronToGrowables = pTG(honeyComb, scale)(_)
+  val polyhedronToElements = pTE(honeyComb, scale)(_)
   
   // full bubble (heavy)
   def heavyBubble = bubble(20, 4f)
@@ -32,7 +32,7 @@ object Shapes {
     
   def at(i: Int, j: Int, k: Int) =
     for ( poly <- honeyComb.polyhedrons(i,j,k);
-      growable <- polyhedronToGrowables(poly))
+      growable <- polyhedronToElements(poly))
       yield growable
     
   def floor(span: Int, level: Int) = {
@@ -43,7 +43,7 @@ object Shapes {
       poly <- honeyComb.polyhedrons(i, j, level);
       d = poly.center.x * poly.center.x + poly.center.y * poly.center.y;
       if ( d < limit );
-      growable <- polyhedronToGrowables(poly) )
+      growable <- polyhedronToElements(poly) )
       yield growable
   }
     
@@ -58,7 +58,7 @@ object Shapes {
       poly <- honeyComb.polyhedrons(i, j, k);
       d = squareDistanceToOrigin(poly);
       if ( d < squareSize + squareTol && d > squareSize - squareTol);
-      growable <- polyhedronToGrowables(poly) )
+      growable <- polyhedronToElements(poly) )
       yield growable
   }
   
@@ -69,9 +69,9 @@ object Shapes {
       j <- -coordLimit until coordLimit;
       k <- 0 to coordLimit;
       poly <- honeyComb.polyhedrons(i, j, k);
-      val d = squareDistanceToOrigin(poly);
+      d = squareDistanceToOrigin(poly);
       if ( d < squareSize );
-      growable <- polyhedronToGrowables(poly) )
+      growable <- polyhedronToElements(poly) )
       yield growable
   }
   
@@ -80,14 +80,14 @@ object Shapes {
       j <- 0 until 16;
       k <- -128 until 1;
       poly <- honeyComb.polyhedrons(i, j, k);
-      growable <- polyhedronToGrowables(poly) )
+      growable <- polyhedronToElements(poly) )
       yield growable
   
   def wall(xSize: Int, zSize: Int) =
     for ( i <- 0 until xSize;
       k <- 0 until zSize;
       poly <- honeyComb.polyhedrons(i, 0, k);
-      growable <- polyhedronToGrowables(poly) )
+      growable <- polyhedronToElements(poly) )
       yield growable
   
   private def squareDistanceToOrigin(poly: Polyhedron) = poly.center.x * poly.center.x + poly.center.y * poly.center.y + poly.center.z * poly.center.z

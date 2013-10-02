@@ -23,7 +23,7 @@ object Perf {
   
   def printResults {
     calls.foreach { case (name, (count, timeSpent)) =>
-      println(s"Called $name $count times, spending ${timeSpent/1000} ms, average: ${timeSpent/1000/count} ms/call")
+      println(s"Called $name $count times, spending ${timeSpent/1000f} ms, average: ${timeSpent/1000f/count} ms/call")
     }
   }
 }

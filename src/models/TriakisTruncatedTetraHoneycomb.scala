@@ -3,7 +3,7 @@ import Honeycomb._
 
 class TriakisTruncatedTetraHoneycomb extends Honeycomb {
   import TriakisTruncatedTetraHoneycomb._
-  import engine.Math.%+
+  import util.Math.%+
   def polyhedron(i: Int, j: Int, k: Int, polyId: Int) = if ( %+(polyId,2) == 0 ) DownwardTriakisTruncatedTetra(i,j,k) else UpwardTriakisTruncatedTetra(i,j,k)
   def polyhedrons(i: Int, j: Int, k: Int) = List(DownwardTriakisTruncatedTetra(i,j,k), UpwardTriakisTruncatedTetra(i,j,k))
 }
@@ -11,7 +11,7 @@ class TriakisTruncatedTetraHoneycomb extends Honeycomb {
 object TriakisTruncatedTetraHoneycomb {
   
   object Points {
-    import engine.Math.SQRTS._
+    import util.Math.SQRTS._
     val TetraBottom  = new Point3f(0, 0, -2*SQRT_6_BY_3/3)*1.5f
     val TetraSouth   = new Point3f(0, -SQRT_3_BY_3, SQRT_6_BY_3/3)*1.5f
     val TetraNW      = new Point3f(-0.5, SQRT_3_BY_6, SQRT_6_BY_3/3)*1.5f

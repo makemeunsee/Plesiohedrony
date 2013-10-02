@@ -9,6 +9,8 @@ import org.lwjgl.opengl.Display
 import perf.Perf.perfed
 import models.Point3f
 import models.container.{Boundable, Octree}
+import scala.collection.mutable.ArrayBuffer
+import util.Collections.successivePairsCycling
 
 abstract class Renderer(val scene: Scene, var width: Int, var height: Int) {
   def init: Unit
@@ -66,7 +68,7 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
 
       glPushMatrix
 
-      scene.camera.setIn3D
+      scene.camera.applyToWorld
 
       glBegin(GL_TRIANGLES)
       val inRange = perfed("visible") { Picking.filter(visibles.values, scene.camera.position) }
@@ -86,14 +88,14 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
 
       glPushMatrix
 
-      scene.camera.rotate
+      scene.camera.rotateWorld
       renderInfinitelyFar
-      scene.camera.translate
+      scene.camera.translateWorld
 
       renderObjects(lastHit)
       renderGrid
-      // debug: view octree
-      renderOctree
+      // debug: view octree leaves
+      //renderOctree
 
       glPopMatrix
 
@@ -156,6 +158,7 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
           render(g)
       })}
     glEnd
+    // show edges of polyhedrons. was ugly...
     //    visibles.map(v => render(v._2))
     //    lastHit.map( faceId => visible.get(faceId).map { g =>
     //      glDisable(GL_LIGHTING)
@@ -192,10 +195,18 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
     glEnd
   }
 
-  private def renderOctree(octree: Octree[_ <: Boundable]): Unit = {
+  private def renderOctree(octree: Octree[Boundable]): Unit = {
     for ( quad <- octree.quads; pair <- successivePairsCycling(quad) ) {
-      glVertex3f(pair._1.x, pair._1.y, pair._1.z)
-      glVertex3f(pair._2.x, pair._2.y, pair._2.z)
+      if(octree.depth == Octree.maxDepth) {
+        if(!octree.empty) {
+          if(octree.values.contains(scene.player))
+            glColor3f(1f,0.3f,0.3f)
+          else 
+            glColor3f(0.3f,0.3f,0.3f)
+          glVertex3f(pair._1.x, pair._1.y, pair._1.z)
+          glVertex3f(pair._2.x, pair._2.y, pair._2.z)
+        }
+      }
     }
     for ( kids <- octree.children; kid <- kids )
       renderOctree(kid)
@@ -237,9 +248,9 @@ object Renderer {
   }
 
   // a renderable face (triangle)
-  trait Growable extends Pickable {
+  trait Growable[T <: Growable[T]] extends Pickable {
     // the new set of growables obtainable from this
-    def growth: Iterable[Growable]
+    def growth: Iterable[T]
     // the set of growables this is part of
     def trunk: Iterable[ID]
   }
@@ -256,22 +267,5 @@ object Renderer {
     buffer.put(values)
     buffer.flip
     glLightModel(glLightModelEnum, buffer)
-  }
-  
-  def successivePairsCycling[A](list: List[A]): List[(A, A)] = {
-    def successivePairsCyclingRec(rem: List[A], first: A): List[(A, A)] =
-      rem match {
-        case List(last) => List((last, first))
-        case h1 :: h2 :: t => {
-          (h1, h2) :: successivePairsCyclingRec(h2 :: t, first)
-        }
-      }
-    list match {
-      case List()  => List()
-      case List(_) => List()
-      case h1 :: h2 :: t => {
-        (h1, h2) :: successivePairsCyclingRec(h2 :: t, h1)
-      }
-    }
   }
 }
