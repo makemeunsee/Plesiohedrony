@@ -2,7 +2,7 @@ package models
 
 import Honeycomb._
 import TetraOctaHoneycomb.{TOHCoordinates, Octahedron0, DownwardTetrahedron0, UpwardTetrahedron0}
-import engine.Math._
+import util.Math._
 
 class GyratedTetraOctaHoneycomb extends Honeycomb {
   
@@ -75,7 +75,6 @@ object GyratedTetraOctaHoneycomb {
     }
 
     private def toGyratedFace(f: Face) = {
-      // TODO: better polygon management
       val t = f.polygon.toTriangles.head
       new Face( f.polyId, ySymmetry(new Triangle(t._1, t._3, t._2), Octahedron0.center.y)) with GyratedOctaTetraFace
     }

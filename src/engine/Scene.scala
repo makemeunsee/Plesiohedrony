@@ -2,47 +2,57 @@ package engine
 
 import scala.collection.mutable.ArrayBuffer
 import engine.Ticker.Tickable
-import scala.math.{Pi}
 import rendering.Renderer._
 import collection.mutable
 import perf.Perf.perfed
-import models.container.{OctreeNode, Boundable, Octree}
-import Octree.Bounds
+import models.container.{Boundable, Bounds, Octree}
+import models.container.immutable.OctreeNode
+import engine.entity.MovingListener
+import engine.entity.{Player, Moving}
 
-trait Element extends Boundable //with Growable
+trait Element extends Boundable with Growable[Element]
 
-class Scene(hideTouching: Boolean) extends Tickable {
+class Scene(hideTouching: Boolean) extends Tickable with MovingListener {
 
-  var octree: Octree[Element] = new OctreeNode[Element]((0,0,0), 0)
-  // TODO remove test code, use octotree with growables or camera, test immutable/mutable perf
-  val testElement = new Element {
-    def within(b: Bounds) = b._1 <= 15 &&
-      b._2 > 15 &&
-      b._3 <= 15 &&
-      b._4 > 15 &&
-      b._5 <= 15 &&
-      b._6 > 15
-
-    override def toString = "15,15,15"
-  }
-  octree += testElement
-  println(octree.values)
-  // end test code
-
-  val camera = new Camera(Pi / 2d,0,0,0,1.8f)
+  var octree: Octree[Boundable] = new OctreeNode[Boundable]((0,0,0), 0)
+  // TODO test immutable/mutable perf, tidy code
+  
+  val player = new Player
+  player.addMovingListener(this)
+  octree += player
+  
+  val camera = player
 
   val wireframes = new ArrayBuffer[Renderable]
-  private val growables = new mutable.HashMap[ID, Growable]
-  val visible = new mutable.HashMap[ID, Growable]
+  private val elements = new mutable.HashMap[ID, Element]
+  val visible = new mutable.HashMap[ID, Element]
   val translationlessRenderables = new mutable.HashSet[SpecialRenderable]
+
+  def aboutToMove(src: Moving) {
+    octree -= player
+  }
+  
+  def moved(src: Moving) {
+    octree += player
+  }
 
   def addWireframe(drawable: Renderable) {
     wireframes += drawable
   }
   
-  def addGrowable(growable: Growable) = perfed("addGrowable") {
+  def addElement(element: Element) = perfed("addElement") {
+    addGrowable(element)
+    octree += element
+  }
+  
+  def removeElement(element: Element) = perfed("removeElement") {
+    removeGrowable(element.id)
+    octree -= element
+  }
+  
+  private def addGrowable(growable: Element) {
     if ( hideTouching ) {
-      val touching = growables.get(growable.touching)
+      val touching = elements.get(growable.touching)
       // hidden faces are noted as such
       touching match {
         case None    => visible += ((growable.id, growable))
@@ -51,20 +61,20 @@ class Scene(hideTouching: Boolean) extends Tickable {
     } else {
       visible += ((growable.id, growable))
     }
-    growables += ((growable.id, growable))
+    elements += ((growable.id, growable))
   }
   
-  def removeGrowable(id: ID) {
+  private def removeGrowable(id: ID) {
     if ( hideTouching ) {
       // revealed faces are made visible
-      for ( g <- growables.get(id); t <- growables.get(g.touching) )
+      for ( g <- elements.get(id); t <- elements.get(g.touching) )
         visible += ((t.id, t))
     }
     visible -= id
-    growables -= id
+    elements -= id
   }
   
-  def getGrowable(id: ID) = growables.get(id)
+  def getElement(id: ID) = elements.get(id)
   
   def tick(tick: Int) {
   }

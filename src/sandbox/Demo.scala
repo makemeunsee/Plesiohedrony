@@ -43,22 +43,22 @@ object Demo extends Tickable {
     import Perf.perfed
     
     // fill scene
-    //Shapes.heavyBubble.foreach(scene.addGrowable)
+    //Shapes.heavyBubble.foreach(scene.addElement)
     perfed("beautybubble") {
-     Shapes.beautyBubble.foreach(scene.addGrowable)
+     Shapes.beautyBubble.foreach(scene.addElement)
     }
-    perfed("grid floor") {
-      Shapes.gridFloor(20).foreach(scene.addWireframe)
-    }
-    //Shapes.floor(10, 0).foreach(scene.addGrowable)
-//    Shapes.at(0,0,0).foreach(scene.addGrowable)
-//    Shapes.at(1,1,1).foreach(scene.addGrowable)
-    perfed("dome") {
-      Shapes.dome(10).foreach(scene.addGrowable)
-    }
-//    Shapes.wall(10,10).foreach(scene.addGrowable)
+//    perfed("grid floor") {
+//      Shapes.gridFloor(20).foreach(scene.addWireframe)
+//    }
+    //Shapes.floor(10, 0).foreach(scene.addElement)
+    Shapes.at(0,0,0).foreach(scene.addElement)
+//    Shapes.at(1,1,1).foreach(scene.addElement)
+//    perfed("dome") {
+//      Shapes.dome(10).foreach(scene.addElement)
+//    }
+//    Shapes.wall(10,10).foreach(scene.addElement)
 //    perfed("mcchunk") {
-//      Shapes.mcChunk.foreach(scene.addGrowable)
+//      Shapes.mcChunk.foreach(scene.addElement)
 //    }
     
     val sun = new SpecialRenderable with Tickable {
@@ -257,20 +257,23 @@ object Demo extends Tickable {
       else
         0
 
-    cam.y += Math.cos(moveAngle).toFloat * planarSpeed
-    cam.x += Math.sin(moveAngle).toFloat * planarSpeed 
-    cam.z += { if (move_up) speed else if (move_down) -speed else 0 }
+    if ( planarSpeed != 0 || move_up || move_down ) {
+      val newY = cam.getY + Math.cos(moveAngle).toFloat * planarSpeed
+      val newX = cam.getX + Math.sin(moveAngle).toFloat * planarSpeed 
+      val newZ = cam.getZ + { if (move_up) speed else if (move_down) -speed else 0 }
+      cam.setXYZ(newX, newY, newZ)
+    }
   }
   
   def updateScene(picked: Option[ID], activity: Activity) {
     picked match {
       case None => ()
       case Some(id) => activity match {
-        case ADDING => for ( pickedFace <- scene.getGrowable(id) )
-          pickedFace.growth.foreach(scene.addGrowable)
-        case REMOVING => for ( pickedFace <- scene.getGrowable(id) )
-          pickedFace.trunk.foreach(scene.removeGrowable)
-        case INFO => for ( pickedFace <- scene.getGrowable(id) )
+        case ADDING => for ( pickedFace <- scene.getElement(id); newFace <- pickedFace.growth)
+          scene.addElement(newFace)
+        case REMOVING => for ( pickedFace <- scene.getElement(id); id <- pickedFace.trunk; el <- scene.getElement(id))
+          scene.removeElement(el)
+        case INFO => for ( pickedFace <- scene.getElement(id) )
           println(s"faceId: ${pickedFace.id}")
         case _ => ()
       }
