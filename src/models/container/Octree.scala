@@ -6,6 +6,8 @@ object Octree {
   val minWidth = 2
   // width of the cube-shaped space covered by an octree
   val width = 2*math.pow(2, maxDepth).toInt
+  
+  def zerokid[T <: Boundable] = List[Octree[T]]()
 }
 import Octree._
 
@@ -19,6 +21,7 @@ trait Octree[T <: Boundable] {
   }
   def children: Option[Seq[Octree[T]]] = None
   def values: Set[T]
+  def valuesAt(boundable: Boundable): Set[T]
   def addValue(t: T): Octree[T]
   def +(t: T) = addValue(t)
   def removeValue(t: T): Octree[T]

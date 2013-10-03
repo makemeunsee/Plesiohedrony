@@ -7,12 +7,6 @@ import org.lwjgl.BufferUtils
 
 object Picking {
   
-  type Color3B = (Byte, Byte, Byte)
-
-  trait Pickable {
-    def center: Point3f
-  }
-  
   val limit = 50f // m², square of the distance within which picking is active
   
   def filter[T <: Pickable](pickables: Iterable[T], origin: Point3f): Map[Color3B, T] = perf.Perf.perfed("picking") {
@@ -22,11 +16,6 @@ object Picking {
   }
              
              // TODO test
-//  {
-//    val test = res.unzip._1
-//    assert(test.distinct.length == test.length)
-//    res
-//  }
     
   def readPicking[T <: Pickable, R](atPoint: (Int, Int),
                                     retained: Map[Color3B, T],

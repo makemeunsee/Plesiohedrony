@@ -4,7 +4,8 @@ import org.lwjgl.opengl.{ Display, DisplayMode }
 import org.lwjgl.input._
 import locale.Keys
 import math._
-import engine.rendering.Renderer.{Renderable, SpecialRenderable, ID, glLightBuff}
+import engine.rendering.{Renderable, SpecialRenderable, ID}
+import engine.rendering.Renderer.glLightBuff
 import engine.{Scene, Ticker, Camera}
 import Ticker.Tickable
 import org.lwjgl.opengl.GL11._
@@ -180,7 +181,7 @@ object Demo extends Tickable {
     var lastUpdate = lastActivity
 
     Ticker.start
-    
+    import engine.rendering.Picking
     while (!finished) {
 
       Display.update

@@ -2,8 +2,8 @@ package sandbox
 
 import models.{Honeycomb, TetraOctaHoneycomb, GyratedTetraOctaHoneycomb, BitruncatedCubicHoneycomb, CubicHoneycomb, TriakisTruncatedTetraHoneycomb}
 import Honeycomb.{Polyhedron}
-import engine.rendering.Renderer.{Renderable}
-import engine.rendering.Picking.Color3B
+import engine.rendering.Renderable
+import engine.rendering.Color3B
 import org.lwjgl.opengl.GL11.glColor3f
 import DefaultElement.{polyhedronToElements => pTE}
 

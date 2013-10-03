@@ -2,9 +2,7 @@ package sandbox
 
 import models.{Honeycomb, Point3f}
 import Honeycomb.{Face, Polyhedron}
-import engine.rendering.Renderer.{Growable, ID}
-import engine.rendering.Picking
-import Picking.Color3B
+import engine.rendering.{Growable, ID, Color3B, Picking}
 import perf.Perf.perfed
 import DefaultElement._
 import engine.Element
@@ -96,10 +94,6 @@ class DefaultElement(i: Int, j: Int, k: Int, polyId: Int, face: Face, origin: Po
       z || pointWithin(bounds, p)
     }
   }
-  
-  def joinedNeighborhood(n: Set[_ <: Boundable]) {}
-  
-  def leftNeighborhood(n: Set[_ <: Boundable]) {}
   
   override def toString = s"$id"
 }

@@ -1,7 +1,6 @@
 package engine.rendering
 
 import engine.{Scene}
-import Picking.Color3B
 import Renderer._
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11._
@@ -11,6 +10,7 @@ import models.Point3f
 import models.container.{Boundable, Octree}
 import scala.collection.mutable.ArrayBuffer
 import util.Collections.successivePairsCycling
+import engine.Element
 
 abstract class Renderer(val scene: Scene, var width: Int, var height: Int) {
   def init: Unit
@@ -195,13 +195,13 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
     glEnd
   }
 
-  private def renderOctree(octree: Octree[Boundable]): Unit = {
+  private def renderOctree(octree: Octree[Element]): Unit = {
     for ( quad <- octree.quads; pair <- successivePairsCycling(quad) ) {
       if(octree.depth == Octree.maxDepth) {
         if(!octree.empty) {
-          if(octree.values.contains(scene.player))
-            glColor3f(1f,0.3f,0.3f)
-          else 
+//          if(octree.values.contains(scene.player))
+//            glColor3f(1f,0.3f,0.3f)
+//          else 
             glColor3f(0.3f,0.3f,0.3f)
           glVertex3f(pair._1.x, pair._1.y, pair._1.z)
           glVertex3f(pair._2.x, pair._2.y, pair._2.z)
@@ -222,38 +222,6 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
 }
 
 object Renderer {
-
-  // coordinates + face id
-  type ID = (Int, Int, Int, Int)
-
-  trait Renderable {
-    def color: Color3B
-    def toTriangles: Iterable[(Point3f, Point3f, Point3f)]
-    def toContour: Iterable[Point3f]
-  }
-  
-  trait SpecialRenderable {
-    def render
-  }
-
-  trait FaceRenderable extends Renderable {
-    // which other triangle this is touching
-    def touching: ID
-    def normal: Point3f
-  }
-
-  trait Pickable extends FaceRenderable with Picking.Pickable {
-    def pickedColor: Color3B
-    def id: ID
-  }
-
-  // a renderable face (triangle)
-  trait Growable[T <: Growable[T]] extends Pickable {
-    // the new set of growables obtainable from this
-    def growth: Iterable[T]
-    // the set of growables this is part of
-    def trunk: Iterable[ID]
-  }
 
   def glLightBuff(glLightEnum: Int, glConstant: Int, values: Array[Float]) {
     val buffer = BufferUtils.createFloatBuffer(values.length)

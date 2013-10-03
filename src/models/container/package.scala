@@ -5,8 +5,6 @@ package object container {
   
   trait Boundable {
     def within(bounds: Bounds): Boolean
-    def joinedNeighborhood(neighbors: Set[_ <: Boundable])
-    def leftNeighborhood(neighbors: Set[_ <: Boundable])
   }
   
   def pointWithin(bounds: Bounds, p: Point3f) =

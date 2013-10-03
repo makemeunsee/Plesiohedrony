@@ -10,21 +10,22 @@ sealed class OctreeLeaf[T <: Boundable](val center: (Int, Int, Int),
 
   val depth = maxDepth
 
+  def valuesAt(boundable: Boundable) =
+    if (boundable.within(bounds))
+      values
+    else
+      new HashSet[T]
+  
   def addValue(t: T) =
-    if (contains(t) && !values.contains(t)) {
-      //println(s"added $t to $this")
-      val newValues = values + t
-      t.joinedNeighborhood(values)
-      new OctreeLeaf(center, newValues)
-    } else
+    if (contains(t) && !values.contains(t))
+      new OctreeLeaf(center, values + t)
+    else
       this
       
   def removeValue(t: T) =
-    if (contains(t) && values.contains(t)) {
-      val newValues = values + t
-      t.leftNeighborhood(values)
+    if (contains(t) && values.contains(t))
       new OctreeLeaf(center, values - t)
-    } else
+    else
       this
       
   def empty = values.isEmpty
@@ -37,11 +38,18 @@ sealed class OctreeNode[T <: Boundable](val center: (Int, Int, Int),
                            override val children: Option[Seq[Octree[T]]] = None) extends Octree[T] {
 
   def values = children match {
-    case Some(kids) => kids.foldLeft(new HashSet[T]()){ (z,e) =>
-      z ++ e.values
-    }
-    case _ => new HashSet[T]()
+    case Some(kids) => kids.map(_.values).reduce(_ ++ _)
+    case _ => new HashSet[T]
   }
+  
+  def valuesAt(boundable: Boundable) =
+    if (boundable.within(bounds))
+      children match {
+        case Some(kids) => kids.map(_.valuesAt(boundable)).reduce(_ ++ _)
+        case _ => new HashSet[T]
+      }
+    else
+      new HashSet[T]
 
   def addValue(t: T) = {
     if (contains(t)) {

@@ -1,12 +1,14 @@
 package engine.entity
 
-import engine.Camera
+import engine.{Camera, Scene}
 import models.container.{Boundable, Bounds, Octree}
 import scala.math.{Pi}
 import scala.collection.mutable.HashSet
 import scala.collection.immutable.Set
+import models.Point3f
+import engine.rendering.FaceRenderable
 
-class Player extends Camera(Pi / 2d,0,0,0,0) with Moving with Boundable {
+class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
 
   val radius = 0.5f
   val squareRadius = radius*radius
@@ -55,27 +57,37 @@ class Player extends Camera(Pi / 2d,0,0,0,0) with Moving with Boundable {
     }
   }
   
-  val neighbors = new HashSet[Boundable]
-  
-  def joinedNeighborhood(n: Set[_ <: Boundable]) {
-    neighbors ++= n
-  }  
-  
-  def leftNeighborhood(n: Set[_ <: Boundable]) {
-    neighbors --= n
-  }      
-    
-  private val listeners = new HashSet[MovingListener] 
-  def addMovingListener(ml: MovingListener) = listeners += ml
-  def removeMovingListener(ml: MovingListener) = listeners -= ml
-  private def notifyListeners(notification: (MovingListener => Unit)) = listeners map notification
+  // TODO not yet working...
+  def collide[T <: FaceRenderable](position: Point3f, suspects: Set[T]): Set[T] = {
+    // center to center vector
+    suspects.filter{ face =>
+      val n = face.normal
+      // player center to some point of the suspect face
+      val vec = position - face.toContour.head
+      // project along normal => distance between face and player center
+      val d = vec * n
+      // bounding sphere must at least intersects the face plane
+      d * d < squareRadius && {
+        // distance is not enough, check if projection inside face
+        val projectedPoint = position - (n * d)
+        // TODO wrong point, must use the point of the circle of intersection between
+        // the player bounding sphere and the face plane which is the closest
+        // to the face center (ok because face is convex)
+        import util.Collections.successivePairsCycling
+        // for each edge AB, check direction of AB ^ AP where P is the projected point
+        successivePairsCycling(face.toContour.toList).foldLeft(true) { case (acc, (pA, pB)) =>
+          acc && ((pB - pA) ^ (projectedPoint - pA)) * n > 0
+        }
+      }
+    }
+  }
   
   override def setXYZ(newX: Float, newY: Float, newZ: Float) = perf.Perf.perfed("move player") {
     if (getX != newX || getY != newY || getZ != newZ) {
-      notifyListeners({ml: MovingListener => ml.aboutToMove(this)})
-      super.setXYZ(newX, newY, newZ)
-      notifyListeners({ml: MovingListener => ml.moved(this)})
+      val neighbors = scene.octree.valuesAt(this)
       println(s"neighbors: ${neighbors.mkString(" ,")}")
+      //println(s"colliding: ${collide(new Point3f(newX, newY, newZ), neighbors).mkString(" ,")}")
+      super.setXYZ(newX, newY, newZ)
     }
   }
   

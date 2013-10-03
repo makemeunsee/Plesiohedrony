@@ -2,39 +2,27 @@ package engine
 
 import scala.collection.mutable.ArrayBuffer
 import engine.Ticker.Tickable
-import rendering.Renderer._
+import rendering.{Growable, Renderable, SpecialRenderable, ID}
 import collection.mutable
 import perf.Perf.perfed
 import models.container.{Boundable, Bounds, Octree}
 import models.container.immutable.OctreeNode
-import engine.entity.MovingListener
-import engine.entity.{Player, Moving}
+import engine.entity.Player
 
 trait Element extends Boundable with Growable[Element]
 
-class Scene(hideTouching: Boolean) extends Tickable with MovingListener {
+class Scene(hideTouching: Boolean) extends Tickable {
 
-  var octree: Octree[Boundable] = new OctreeNode[Boundable]((0,0,0), 0)
+  var octree: Octree[Element] = new OctreeNode[Element]((0,0,0), 0)
   // TODO test immutable/mutable perf, tidy code
   
-  val player = new Player
-  player.addMovingListener(this)
-  octree += player
-  
+  val player = new Player(this)
   val camera = player
 
   val wireframes = new ArrayBuffer[Renderable]
   private val elements = new mutable.HashMap[ID, Element]
   val visible = new mutable.HashMap[ID, Element]
   val translationlessRenderables = new mutable.HashSet[SpecialRenderable]
-
-  def aboutToMove(src: Moving) {
-    octree -= player
-  }
-  
-  def moved(src: Moving) {
-    octree += player
-  }
 
   def addWireframe(drawable: Renderable) {
     wireframes += drawable
