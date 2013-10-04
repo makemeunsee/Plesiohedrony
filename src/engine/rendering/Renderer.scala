@@ -163,18 +163,18 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
         else
           render(g)
       })}
-    // show edges of polyhedrons. was ugly...
-    //    visibles.map(v => render(v._2))
-    //    lastHit.map( faceId => visible.get(faceId).map { g =>
-    //      glDisable(GL_LIGHTING)
-    //      glPolygonMode(GL_FRONT, GL_LINE)
-    //      glColor3f(0,0,0)
-    //      glLineWidth(2)
-    //      glBegin(GL_LINES)
-    //      renderLine(g)
-    //      glEnd
-    //    })
     glEnd
+    // show edges of polyhedrons. TODO: not all line show, fix it... best case: use edge shader
+//    visibles.map(v => render(v._2))
+    visibles.map { g =>
+      glDisable(GL_LIGHTING)
+      glPolygonMode(GL_FRONT, GL_LINE)
+      glColor3f(1,1,1)
+      glLineWidth(2)
+      glBegin(GL_LINES)
+      renderLine(g._2)
+      glEnd
+    }
   }
 
   private def renderInfinitelyFar {

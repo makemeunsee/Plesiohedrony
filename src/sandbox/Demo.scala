@@ -24,7 +24,8 @@ object Demo extends Tickable {
   val updateDelay = 200 // ms
   
   // set scale to 1 for improved performance
-  Shapes.scale = 0.85f
+  // TODO flag to scale bounds as well or not
+  Shapes.scale = 1f
   val scene = new Scene(Shapes.scale == 1f)
   val renderer = new DefaultRenderer(scene, width, height)
   //new CaveRenderer(scene, width, height)
@@ -45,15 +46,18 @@ object Demo extends Tickable {
     
     // fill scene
     //Shapes.heavyBubble.foreach(scene.addElement)
-    perfed("beautybubble") {
-     Shapes.beautyBubble.foreach(scene.addElement)
-    }
+//    perfed("beautybubble") {
+//     Shapes.beautyBubble.foreach(scene.addElement)
+//    }
 //    perfed("grid floor") {
 //      Shapes.gridFloor(20).foreach(scene.addWireframe)
 //    }
-    //Shapes.floor(10, 0).foreach(scene.addElement)
+//    Shapes.floor(10, 0).foreach(scene.addElement)
 //    Shapes.at(0,0,0).foreach(scene.addElement)
     Shapes.at(1,1,1).foreach(scene.addElement)
+    Shapes.at(2,3,4).foreach(scene.addElement)
+    Shapes.at(5,6,7).foreach(scene.addElement)
+    Shapes.at(8,6,4).foreach(scene.addElement)
 //    perfed("dome") {
 //      Shapes.dome(10).foreach(scene.addElement)
 //    }

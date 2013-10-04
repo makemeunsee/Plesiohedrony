@@ -30,35 +30,44 @@ class Scene(hideTouching: Boolean) extends Tickable {
   
   def addElement(element: Element) = perfed("addElement") {
     addGrowable(element)
-    octree += element
   }
   
   def removeElement(element: Element) = perfed("removeElement") {
     removeGrowable(element.id)
-    octree -= element
   }
   
-  private def addGrowable(growable: Element) {
+  private def addGrowable(e: Element) {
     if ( hideTouching ) {
-      val touching = elements.get(growable.touching)
-      // hidden faces are noted as such
+      val touching = elements.get(e.touching)
+      // hidden faces are removed from the active scene
       touching match {
-        case None    => visible += ((growable.id, growable))
-        case Some(t) => visible -= t.id ; visible -= growable.id
+        case None    => {
+          visible += ((e.id, e))
+          octree += e
+        }
+        case Some(t) => {
+          visible -= t.id
+          octree -= t
+        }
       }
     } else {
-      visible += ((growable.id, growable))
+      visible += ((e.id, e))
+      octree += e
     }
-    elements += ((growable.id, growable))
+    elements += ((e.id, e))
   }
   
   private def removeGrowable(id: ID) {
     if ( hideTouching ) {
       // revealed faces are made visible
-      for ( g <- elements.get(id); t <- elements.get(g.touching) )
+      for ( g <- elements.get(id); t <- elements.get(g.touching) ) {
         visible += ((t.id, t))
+        octree += t
+      }
     }
     visible -= id
+    for ( e <- elements.get(id) )
+      octree -= e
     elements -= id
   }
   

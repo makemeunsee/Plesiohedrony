@@ -125,6 +125,17 @@ class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
       colliding ++= collide(new Point3f(newX, newY, newZ), neighbors)
       if ( colliding.isEmpty)
         super.setXYZ(newX, newY, newZ)
+      else {
+        //println(s"colliding: ${colliding.mkString(", ")}")
+        val allowed = colliding.map(_.normal).foldLeft(new Point3f(newX-getX, newY-getY, newZ-getZ)) { case (acc,n) =>
+          val nComponent = acc * n
+          if ( nComponent < 0 )
+            acc - (n * (acc * n) )
+          else
+            acc
+        }
+        super.setXYZ(getX + allowed.x, getY + allowed.y, getZ + allowed.z)
+      }
     }
   }
   
