@@ -17,7 +17,7 @@ object Demo extends Tickable {
   
   val GAME_TITLE = "Plesiohedrony"
   val FRAMERATE = 60
-  val SPEED = 0.01f // m/ms
+  val SPEED = 0.005f // m/ms
   val width = 800
   val height = 600
   
@@ -52,8 +52,8 @@ object Demo extends Tickable {
 //      Shapes.gridFloor(20).foreach(scene.addWireframe)
 //    }
     //Shapes.floor(10, 0).foreach(scene.addElement)
-    Shapes.at(0,0,0).foreach(scene.addElement)
-//    Shapes.at(1,1,1).foreach(scene.addElement)
+//    Shapes.at(0,0,0).foreach(scene.addElement)
+    Shapes.at(1,1,1).foreach(scene.addElement)
 //    perfed("dome") {
 //      Shapes.dome(10).foreach(scene.addElement)
 //    }

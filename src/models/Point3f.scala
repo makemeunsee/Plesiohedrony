@@ -1,7 +1,7 @@
 package models
 
 // a 3D point / vector
-class Point3f(val x: Float, val y: Float, val z: Float) {
+class Point3f(val x: Float, val y: Float, val z: Float) extends Tuple3(x, y, z) {
     def this(xd: Double, yd: Double, zd: Double) {
       this(xd.toFloat, yd.toFloat, zd.toFloat)
     }
@@ -31,9 +31,11 @@ class Point3f(val x: Float, val y: Float, val z: Float) {
     def *(factor: Float) = new Point3f(x * factor, y * factor, z * factor)
 
     def normalize = {
-      val norm = math.sqrt(x * x + y * y + z * z).toFloat
-      new Point3f(x / norm, y / norm, z / norm)
+      val n = norm.toFloat
+      new Point3f(x / n, y / n, z / n)
     }
+    
+    def norm = math.sqrt(this * this)
     
     override def toString = s"($x, $y, $z)"
   }

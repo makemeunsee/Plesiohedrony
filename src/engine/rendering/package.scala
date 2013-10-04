@@ -22,11 +22,11 @@ package object rendering {
   trait FaceRenderable extends Renderable {
     // which other triangle this is touching
     def touching: ID
+    def center: Point3f
     def normal: Point3f
   }
 
   trait Pickable extends FaceRenderable {
-    def center: Point3f
     def pickedColor: Color3B
     def id: ID
   }

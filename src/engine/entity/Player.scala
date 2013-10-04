@@ -7,6 +7,7 @@ import scala.collection.mutable.HashSet
 import scala.collection.immutable.Set
 import models.Point3f
 import engine.rendering.FaceRenderable
+import engine.Element
 
 class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
 
@@ -57,27 +58,62 @@ class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
     }
   }
   
-  // TODO not yet working...
-  def collide[T <: FaceRenderable](position: Point3f, suspects: Set[T]): Set[T] = {
+  val colliding = new HashSet[Element]
+    
+  import util.Collections.successivePairsCycling
+  private def pointInsideFace[T <: FaceRenderable](face: T, p: Point3f): Boolean = {
+    successivePairsCycling(face.toContour.toList).forall { case (pA, pB) =>
+      // for each edge AB, check direction of AB ^ AP to know on which side of AB lies P
+      ((pB - pA) ^ (p - pA)) * face.normal > 0
+    }
+  }
+  
+  private def circleIntersectsFaceEdge[T <: FaceRenderable](face: T, pO: Point3f, r: Float): Boolean = {
+    successivePairsCycling(face.toContour.toList).exists{ case (pA, pB) =>
+       // compute distance between circle center O and line AB
+      val vAO = pO - pA
+      val vBO = pO - pB
+      // either point in inside the circle
+      vAO * vAO < r * r ||
+      vBO * vBO < r * r || {
+        // or the projection of the circle center is inside the segment
+        val vAB = (pB - pA)
+        val u = vAB.normalize
+        val d = (vAO ^ u).norm
+        // not too far to project
+        d < r && {
+          // compute projection P of center O on AB
+          val dAP = vAO * u
+          val pP = pA + (u * dAP)
+          // P must be between A and B
+          (pA - pP) * (pB - pP) < 0
+        }
+      }
+    }
+  }
+  
+  def collide[T <: FaceRenderable](position: Point3f, suspects: Set[T]): Set[T] = perf.Perf.perfed("collide") {
     // center to center vector
     suspects.filter{ face =>
       val n = face.normal
-      // player center to some point of the suspect face
-      val vec = position - face.toContour.head
+      val fCenter = face.center
+      // player center to center of the face
+      val vec = position - fCenter
       // project along normal => distance between face and player center
-      val d = vec * n
+      val d = math.abs(vec * n)
       // bounding sphere must at least intersects the face plane
       d * d < squareRadius && {
         // distance is not enough, check if projection inside face
-        val projectedPoint = position - (n * d)
-        // TODO wrong point, must use the point of the circle of intersection between
-        // the player bounding sphere and the face plane which is the closest
-        // to the face center (ok because face is convex)
-        import util.Collections.successivePairsCycling
-        // for each edge AB, check direction of AB ^ AP where P is the projected point
-        successivePairsCycling(face.toContour.toList).foldLeft(true) { case (acc, (pA, pB)) =>
-          acc && ((pB - pA) ^ (projectedPoint - pA)) * n > 0
-        }
+        
+        // the bounding sphere of the player intersects the face plane, forming a circle
+        // center of the circle of intersection
+        val pCenter = position - (n * d)
+        // radius of the circle of intersection
+        val r = math.sqrt(squareRadius - d*d).toFloat
+        
+        // intersection circle is inside the face polygon or
+        // it intersects an edge of the face polygon
+        pointInsideFace(face, pCenter) || circleIntersectsFaceEdge(face, pCenter, r)
       }
     }
   }
@@ -85,9 +121,10 @@ class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
   override def setXYZ(newX: Float, newY: Float, newZ: Float) = perf.Perf.perfed("move player") {
     if (getX != newX || getY != newY || getZ != newZ) {
       val neighbors = scene.octree.valuesAt(this)
-      println(s"neighbors: ${neighbors.mkString(" ,")}")
-      //println(s"colliding: ${collide(new Point3f(newX, newY, newZ), neighbors).mkString(" ,")}")
-      super.setXYZ(newX, newY, newZ)
+      colliding.clear
+      colliding ++= collide(new Point3f(newX, newY, newZ), neighbors)
+      if ( colliding.isEmpty)
+        super.setXYZ(newX, newY, newZ)
     }
   }
   

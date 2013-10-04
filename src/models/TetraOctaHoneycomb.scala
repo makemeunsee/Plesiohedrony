@@ -30,14 +30,14 @@ object TetraOctaHoneycomb {
   private[models] object Points {
     // TetraOctaHoneycomb pattern points form 2 rhombus, one stacked upon the other, the upper one a bit farther along the y axis
     sealed class TOHPoint(x: Float, y: Float, z: Float) extends Point3f(x,y,z)
-    case object North    extends TOHPoint ( 0.5f, SQRT_3_BY_2, 0.0f)
-    case object South    extends TOHPoint ( 0.5f, -SQRT_3_BY_2, 0)
-    case object East     extends TOHPoint ( 1f, 0f, 0f)
-    case object West     extends TOHPoint ( 0f, 0f, 0f)
-    case object LowEast  extends TOHPoint ( 1f, -SQRT_3_BY_3, -SQRT_6_BY_3)
-    case object LowWest  extends TOHPoint ( 0f, -SQRT_3_BY_3, -SQRT_6_BY_3)
-    case object LowNorth extends TOHPoint ( 0.5f, SQRT_3_BY_6, -SQRT_6_BY_3)
-    case object LowSouth extends TOHPoint ( 0.5f, -SQRT_3_BY_3-SQRT_3_BY_2, -SQRT_6_BY_3)
+    object North    extends TOHPoint ( 0.5f, SQRT_3_BY_2, 0.0f)
+    object South    extends TOHPoint ( 0.5f, -SQRT_3_BY_2, 0)
+    object East     extends TOHPoint ( 1f, 0f, 0f)
+    object West     extends TOHPoint ( 0f, 0f, 0f)
+    object LowEast  extends TOHPoint ( 1f, -SQRT_3_BY_3, -SQRT_6_BY_3)
+    object LowWest  extends TOHPoint ( 0f, -SQRT_3_BY_3, -SQRT_6_BY_3)
+    object LowNorth extends TOHPoint ( 0.5f, SQRT_3_BY_6, -SQRT_6_BY_3)
+    object LowSouth extends TOHPoint ( 0.5f, -SQRT_3_BY_3-SQRT_3_BY_2, -SQRT_6_BY_3)
   }
   import Points._
     

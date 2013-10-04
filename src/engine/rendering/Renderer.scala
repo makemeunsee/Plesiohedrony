@@ -149,7 +149,13 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
     glPolygonMode(GL_FRONT, GL_FILL)
     glBegin(GL_TRIANGLES)
     lastHit match {
-      case None => visibles.map(v => render(v._2))
+      case None => visibles.map{ case (id, v) =>
+        // debug code to see collisions
+        if ( scene.player.colliding.contains(v))
+          render(v, (-1,0,0), v.normal) 
+        else
+         render(v)
+      }
       case Some(faceId) => visibles.map(o => {
         val g = o._2
         if (g.id == faceId)
@@ -157,7 +163,6 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
         else
           render(g)
       })}
-    glEnd
     // show edges of polyhedrons. was ugly...
     //    visibles.map(v => render(v._2))
     //    lastHit.map( faceId => visible.get(faceId).map { g =>
@@ -169,6 +174,7 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
     //      renderLine(g)
     //      glEnd
     //    })
+    glEnd
   }
 
   private def renderInfinitelyFar {

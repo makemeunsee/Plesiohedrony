@@ -11,14 +11,14 @@ class CubicHoneycomb extends Honeycomb {
 object CubicHoneycomb {
   
   object Points {
-    case object TopNE extends Point3f(0.5,0.5,0.5)
-    case object TopNW extends Point3f(-0.5,0.5,0.5)
-    case object TopSW extends Point3f(-0.5,-0.5,0.5)
-    case object TopSE extends Point3f(0.5,-0.5,0.5)
-    case object BottomNE extends Point3f(0.5,0.5,-0.5)
-    case object BottomNW extends Point3f(-0.5,0.5,-0.5)
-    case object BottomSW extends Point3f(-0.5,-0.5,-0.5)
-    case object BottomSE extends Point3f(0.5,-0.5,-0.5)
+    object TopNE extends Point3f(0.5,0.5,0.5)
+    object TopNW extends Point3f(-0.5,0.5,0.5)
+    object TopSW extends Point3f(-0.5,-0.5,0.5)
+    object TopSE extends Point3f(0.5,-0.5,0.5)
+    object BottomNE extends Point3f(0.5,0.5,-0.5)
+    object BottomNW extends Point3f(-0.5,0.5,-0.5)
+    object BottomSW extends Point3f(-0.5,-0.5,-0.5)
+    object BottomSE extends Point3f(0.5,-0.5,-0.5)
   }
   import Points._
 

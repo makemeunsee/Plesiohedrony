@@ -1,5 +1,8 @@
 package models.container
 
+import scala.math.Numeric
+import util.Geometry.{boundingCube, cubeBounds} 
+
 object Octree {
   val maxDepth = 15
   // width of a leaf
@@ -15,10 +18,7 @@ import Octree._
 trait Octree[T <: Boundable] {
   def depth: Int
   def center: (Int, Int, Int)
-  def bounds: Bounds = {
-    val halfWidth = width / 2
-    (center._1 - halfWidth, center._1 + halfWidth, center._2 - halfWidth, center._2 + halfWidth, center._3 - halfWidth, center._3 + halfWidth)
-  }
+  def bounds: Bounds = cubeBounds(center, width / 2)
   def children: Option[Seq[Octree[T]]] = None
   def values: Set[T]
   def valuesAt(boundable: Boundable): Set[T]
@@ -37,13 +37,5 @@ trait Octree[T <: Boundable] {
     widthAtDepthRec(Octree.width, depth)
   }
 
-  import models.Point3f
-  def quads = List(
-    List(new Point3f(bounds._1, bounds._3, bounds._5), new Point3f(bounds._1, bounds._4, bounds._5), new Point3f(bounds._1, bounds._4, bounds._6), new Point3f(bounds._1, bounds._3, bounds._6)),
-    List(new Point3f(bounds._2, bounds._3, bounds._5), new Point3f(bounds._2, bounds._4, bounds._5), new Point3f(bounds._2, bounds._4, bounds._6), new Point3f(bounds._2, bounds._3, bounds._6)),
-    List(new Point3f(bounds._1, bounds._3, bounds._5), new Point3f(bounds._2, bounds._3, bounds._5), new Point3f(bounds._2, bounds._3, bounds._6), new Point3f(bounds._1, bounds._3, bounds._6)),
-    List(new Point3f(bounds._1, bounds._4, bounds._5), new Point3f(bounds._2, bounds._4, bounds._5), new Point3f(bounds._2, bounds._4, bounds._6), new Point3f(bounds._1, bounds._4, bounds._6)),
-    List(new Point3f(bounds._1, bounds._3, bounds._5), new Point3f(bounds._1, bounds._4, bounds._5), new Point3f(bounds._2, bounds._4, bounds._5), new Point3f(bounds._2, bounds._3, bounds._5)),
-    List(new Point3f(bounds._1, bounds._3, bounds._6), new Point3f(bounds._1, bounds._4, bounds._6), new Point3f(bounds._2, bounds._4, bounds._6), new Point3f(bounds._2, bounds._3, bounds._6))
-  )
+  def quads = boundingCube(center, width / 2)
 }
