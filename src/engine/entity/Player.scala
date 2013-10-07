@@ -4,7 +4,7 @@ import engine.{Camera, Scene}
 import models.container.{Boundable, Bounds, Octree}
 import scala.math.{Pi}
 import scala.collection.mutable.HashSet
-import scala.collection.immutable.Set
+import scala.collection.Set
 import models.Point3f
 import engine.rendering.FaceRenderable
 import engine.Element
@@ -14,7 +14,6 @@ class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
   val radius = 0.5f
   val squareRadius = radius*radius
   
-  // TODO: stretch along z?
   // player bounds is a sphere
   def within(bounds: Bounds) = perf.Perf.perfed("player within") {
     val position = (bounds._1 <= getX, bounds._2 > getX,

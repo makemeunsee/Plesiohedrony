@@ -17,14 +17,13 @@ object Demo extends Tickable {
   
   val GAME_TITLE = "Plesiohedrony"
   val FRAMERATE = 60
-  val SPEED = 0.005f // m/ms
+  val SPEED = 0.002f // m/ms
   val width = 800
   val height = 600
   
   val updateDelay = 200 // ms
   
   // set scale to 1 for improved performance
-  // TODO flag to scale bounds as well or not
   Shapes.scale = 1f
   val scene = new Scene(Shapes.scale == 1f)
   val renderer = new DefaultRenderer(scene, width, height)
@@ -54,13 +53,13 @@ object Demo extends Tickable {
 //    }
 //    Shapes.floor(10, 0).foreach(scene.addElement)
 //    Shapes.at(0,0,0).foreach(scene.addElement)
-    Shapes.at(1,1,1).foreach(scene.addElement)
-    Shapes.at(2,3,4).foreach(scene.addElement)
-    Shapes.at(5,6,7).foreach(scene.addElement)
-    Shapes.at(8,6,4).foreach(scene.addElement)
-//    perfed("dome") {
-//      Shapes.dome(10).foreach(scene.addElement)
-//    }
+//    Shapes.at(1,1,1).foreach(scene.addElement)
+//    Shapes.at(2,3,4).foreach(scene.addElement)
+//    Shapes.at(5,6,7).foreach(scene.addElement)
+//    Shapes.at(8,6,4).foreach(scene.addElement)
+    perfed("dome") {
+      Shapes.dome(10).foreach(scene.addElement)
+    }
 //    Shapes.wall(10,10).foreach(scene.addElement)
 //    perfed("mcchunk") {
 //      Shapes.mcChunk.foreach(scene.addElement)
@@ -276,8 +275,8 @@ object Demo extends Tickable {
       case Some(id) => activity match {
         case ADDING => for ( pickedFace <- scene.getElement(id); newFace <- pickedFace.growth)
           scene.addElement(newFace)
-        case REMOVING => for ( pickedFace <- scene.getElement(id); id <- pickedFace.trunk; el <- scene.getElement(id))
-          scene.removeElement(el)
+        case REMOVING => for ( pickedFace <- scene.getElement(id); id <- pickedFace.trunk)
+          scene.removeElement(id)
         case INFO => for ( pickedFace <- scene.getElement(id) )
           println(s"faceId: ${pickedFace.id}")
         case _ => ()

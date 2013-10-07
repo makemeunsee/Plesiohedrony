@@ -62,7 +62,6 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
       glDisable(GL_LIGHTING)
       glDisable(GL_LIGHT0)
       glDisable(GL_TEXTURE)
-      //glPolygonMode(GL_FRONT, GL_FILL)
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
       glLoadIdentity
 
@@ -79,7 +78,6 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
 
       glEnable(GL_LIGHT0)
       glEnable(GL_LIGHTING)
-      //glPolygonMode(GL_FRONT, GL_FILL)
       render(false, Picking.readPicking((width / 2, height / 2), inRange, {p: Pickable => p.id}))
       //lastHit
     } else {
@@ -147,6 +145,8 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
   private def renderObjects(lastHit: Option[ID]) {
     glEnable(GL_LIGHTING)
     glPolygonMode(GL_FRONT, GL_FILL)
+    glEnable( GL_POLYGON_OFFSET_FILL )      
+    glPolygonOffset( 1f, 1f )
     glBegin(GL_TRIANGLES)
     lastHit match {
       case None => visibles.map{ case (id, v) =>
@@ -164,17 +164,19 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
           render(g)
       })}
     glEnd
-    // show edges of polyhedrons. TODO: not all line show, fix it... best case: use edge shader
-//    visibles.map(v => render(v._2))
+    // show edges of polyhedrons.
+//    glEnable(GL_LINE_SMOOTH)
+//    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST )
+    //glLineWidth(1.5f)
+    glDisable(GL_LIGHTING)
+    glDisable( GL_POLYGON_OFFSET_FILL )
+    glPolygonMode(GL_FRONT, GL_LINE)
+    glColor3f(1,1,1)
+    glBegin(GL_LINES)
     visibles.map { g =>
-      glDisable(GL_LIGHTING)
-      glPolygonMode(GL_FRONT, GL_LINE)
-      glColor3f(1,1,1)
-      glLineWidth(2)
-      glBegin(GL_LINES)
       renderLine(g._2)
-      glEnd
     }
+    glEnd
   }
 
   private def renderInfinitelyFar {

@@ -2,7 +2,7 @@ package models
 
 trait Polygon extends Iterable[Point3f] {
   def size: Int
-  def scaled(scale: Float): Polygon
+  def scaled(scale: Float, center: Point3f = new Point3f(0,0,0)): Polygon
   def translate(vector: Point3f): Polygon
   def pointSymetry(p: Point3f): Polygon
   def center: Point3f
@@ -17,7 +17,7 @@ sealed class PolygonImpl(pts: Iterable[Point3f], override val size: Int) extends
   protected val points = pts.take(size).toArray
   assert(points.length > 0)
   
-  def scaled(scale: Float) = new PolygonImpl(map(_ * scale), size)
+  def scaled(scale: Float, center: Point3f) = new PolygonImpl(map(pt => (pt - center) * scale + center), size)
   
   def translate(vector: Point3f) = new PolygonImpl(map(_ + vector), size)
   

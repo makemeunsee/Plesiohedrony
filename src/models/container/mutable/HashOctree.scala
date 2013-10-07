@@ -2,10 +2,11 @@ package models.container.immutable
 
 import models.container.Octree
 import models.container.Boundable
-import scala.collection.immutable.HashSet
+import scala.collection.mutable.Set
+import scala.collection.mutable.HashSet
 import Octree._
 
-sealed class OctreeLeaf[T <: Boundable](val center: (Int, Int, Int),
+class MOctreeLeaf[T <: Boundable](val center: (Int, Int, Int),
                            val values: Set[T] = new HashSet[T]) extends Octree[T] {
 
   val depth = maxDepth
@@ -16,27 +17,29 @@ sealed class OctreeLeaf[T <: Boundable](val center: (Int, Int, Int),
     else
       new HashSet[T]
   
-  def addValue(t: T) =
+  def addValue(t: T) = {
     if (contains(t) && !values.contains(t))
-      new OctreeLeaf(center, values + t)
-    else
-      this
+      values += t
+    this
+  }
       
-  def removeValue(t: T) =
+  def removeValue(t: T) = {
     if (contains(t) && values.contains(t))
-      new OctreeLeaf(center, values - t)
-    else
-      this
+      values -= t
+    this
+  }
       
   def empty = values.isEmpty
 
-  override def toString = s"immutable.Leaf $bounds"
+  override def toString = s"mutable.Leaf $bounds"
 }
 
-sealed class OctreeNode[T <: Boundable](val center: (Int, Int, Int),
-                           val depth: Int,
-                           override val children: Option[Seq[Octree[T]]] = None) extends Octree[T] {
+class MOctreeNode[T <: Boundable](val center: (Int, Int, Int),
+                           val depth: Int) extends Octree[T] {
 
+  var vChildren: Option[Seq[Octree[T]]] = None
+  override def children = vChildren
+  
   def values = children match {
     case Some(kids) => kids.map(_.values).reduce(_ ++ _)
     case _ => new HashSet[T]
@@ -54,27 +57,27 @@ sealed class OctreeNode[T <: Boundable](val center: (Int, Int, Int),
   def addValue(t: T) = {
     if (contains(t)) {
       children match {
-        case Some(kids) => new OctreeNode(center, depth, Some(kids.map(_.addValue(t))))
-        case _          => new OctreeNode(center, depth, Some(createChildren[T](center, depth).map(_.addValue(t))))
+        case Some(kids) => kids.map(_.addValue(t))
+        case _          => vChildren = Some(createChildren[T](center, depth).map(_.addValue(t)))
       }
-    } else
-      this
+    }
+    this
   }
   
-  def removeValue(t: T): Octree[T] =
+  def removeValue(t: T): Octree[T] = {
     if (contains(t))
       children match {
         case Some(kids) => {
-          val newKids = kids.map(_.removeValue(t))
-          for ( newKid <- newKids )
-            if (!newKid.empty)
-              return new OctreeNode(center, depth, Some(newKids))
-          new OctreeNode(center, depth)
+          kids.map(_.removeValue(t))
+          for ( kid <- kids )
+            if (!kid.empty)
+              return this
+          vChildren = None
         }
         case _          => this
       }
-    else
-      this
+    this
+  }
       
   def empty: Boolean = children match {
         case Some(kids) => {
@@ -107,5 +110,5 @@ sealed class OctreeNode[T <: Boundable](val center: (Int, Int, Int),
       creator((center._1 + diff, center._2 + diff, center._3 + diff)))
   }
 
-  override def toString = s"immutable.Node $bounds"
+  override def toString = s"mutable.Node $bounds"
 }

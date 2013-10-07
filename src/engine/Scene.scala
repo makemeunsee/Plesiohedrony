@@ -6,15 +6,15 @@ import rendering.{Growable, Renderable, SpecialRenderable, ID}
 import collection.mutable
 import perf.Perf.perfed
 import models.container.{Boundable, Bounds, Octree}
-import models.container.immutable.OctreeNode
 import engine.entity.Player
+import models.container.immutable.OctreeNode
+import models.container.immutable.MOctreeNode
 
 trait Element extends Boundable with Growable[Element]
 
 class Scene(hideTouching: Boolean) extends Tickable {
 
-  var octree: Octree[Element] = new OctreeNode[Element]((0,0,0), 0)
-  // TODO test immutable/mutable perf, tidy code
+  var octree: Octree[Element] = new MOctreeNode[Element]((0,0,0), 0)
   
   val player = new Player(this)
   val camera = player
@@ -28,15 +28,7 @@ class Scene(hideTouching: Boolean) extends Tickable {
     wireframes += drawable
   }
   
-  def addElement(element: Element) = perfed("addElement") {
-    addGrowable(element)
-  }
-  
-  def removeElement(element: Element) = perfed("removeElement") {
-    removeGrowable(element.id)
-  }
-  
-  private def addGrowable(e: Element) {
+  def addElement(e: Element) = perfed("addElement") {
     if ( hideTouching ) {
       val touching = elements.get(e.touching)
       // hidden faces are removed from the active scene
@@ -57,7 +49,7 @@ class Scene(hideTouching: Boolean) extends Tickable {
     elements += ((e.id, e))
   }
   
-  private def removeGrowable(id: ID) {
+  def removeElement(id: ID) = perfed("removeElement") {
     if ( hideTouching ) {
       // revealed faces are made visible
       for ( g <- elements.get(id); t <- elements.get(g.touching) ) {
@@ -73,7 +65,22 @@ class Scene(hideTouching: Boolean) extends Tickable {
   
   def getElement(id: ID) = elements.get(id)
   
+  val growChance = 1.3
+  val decayChance = 1
+  val lifeRate = 10000
+  
   def tick(tick: Int) {
+    val mod = tick % 5
+    if( mod == 0 ) {
+      for ( e <- visible.values )
+        if ( math.random * lifeRate < growChance )
+          for ( g <- e.growth )
+            addElement(g)
+    } else if ( mod == 4 ) {
+      for ( e <- elements.values )
+        if ( math.random * lifeRate < decayChance )
+          for ( id <- e.trunk )
+            removeElement(id)
+    }
   }
-
 }
