@@ -55,12 +55,11 @@ class MOctreeNode[T <: Boundable](val center: (Int, Int, Int),
       new HashSet[T]
 
   def addValue(t: T) = {
-    if (contains(t)) {
+    if (contains(t))
       children match {
-        case Some(kids) => kids.map(_.addValue(t))
+        case Some(kids) => kids.foreach(_.addValue(t))
         case _          => vChildren = Some(createChildren[T](center, depth).map(_.addValue(t)))
       }
-    }
     this
   }
   
@@ -93,9 +92,9 @@ class MOctreeNode[T <: Boundable](val center: (Int, Int, Int),
     def creator(childCenter: (Int, Int, Int)): Octree[T] = {
       val childDepth = depth + 1
       if (childDepth < maxDepth)
-        new OctreeNode[T](childCenter, childDepth)
+        new MOctreeNode[T](childCenter, childDepth)
       else if (childDepth == maxDepth)
-        new OctreeLeaf[T](childCenter)
+        new MOctreeLeaf[T](childCenter)
       else
         throw new Error(s"requesting octree depth $childDepth > to max depth $maxDepth")
     }

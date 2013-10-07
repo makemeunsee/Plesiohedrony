@@ -14,7 +14,7 @@ trait Element extends Boundable with Growable[Element]
 
 class Scene(hideTouching: Boolean) extends Tickable {
 
-  var octree: Octree[Element] = new MOctreeNode[Element]((0,0,0), 0)
+  var octree: Octree[Element] = new OctreeNode[Element]((0,0,0), 0)
   
   val player = new Player(this)
   val camera = player
