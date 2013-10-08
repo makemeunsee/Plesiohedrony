@@ -8,6 +8,7 @@ import scala.collection.Set
 import models.Point3f
 import engine.rendering.FaceRenderable
 import engine.Element
+import sandbox.Configuration
 
 class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
 
@@ -119,13 +120,10 @@ class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
   
   override def setXYZ(newX: Float, newY: Float, newZ: Float) = perf.Perf.perfed("move player") {
     if (getX != newX || getY != newY || getZ != newZ) {
-      val neighbors = scene.octree.valuesAt(this)
-      colliding.clear
-      colliding ++= collide(new Point3f(newX, newY, newZ), neighbors)
-      if ( colliding.isEmpty)
-        super.setXYZ(newX, newY, newZ)
-      else {
-        //println(s"colliding: ${colliding.mkString(", ")}")
+      if ( Configuration.propCollision ) {
+        colliding.clear
+        val neighbors = scene.octree.valuesAt(this)
+        colliding ++= collide(new Point3f(newX, newY, newZ), neighbors)
         val allowed = colliding.map(_.normal).foldLeft(new Point3f(newX-getX, newY-getY, newZ-getZ)) { case (acc,n) =>
           val nComponent = acc * n
           if ( nComponent < 0 )
@@ -134,6 +132,8 @@ class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
             acc
         }
         super.setXYZ(getX + allowed.x, getY + allowed.y, getZ + allowed.z)
+      } else {
+        super.setXYZ(newX, newY, newZ)
       }
     }
   }

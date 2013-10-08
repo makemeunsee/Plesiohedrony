@@ -1,15 +1,14 @@
 package sandbox
 
-import models.{Honeycomb, TetraOctaHoneycomb, GyratedTetraOctaHoneycomb, BitruncatedCubicHoneycomb, CubicHoneycomb, TriakisTruncatedTetraHoneycomb}
+import models.{Honeycomb, TetraOctaHoneycomb}
 import Honeycomb.{Polyhedron}
 import engine.rendering.Renderable
 import engine.rendering.Color3B
-import org.lwjgl.opengl.GL11.glColor3f
 import DefaultElement.{polyhedronToElements => pTE}
 
 object Shapes {
   
-  val honeyComb = new BitruncatedCubicHoneycomb
+  val honeyComb = Configuration.propHoneycomb.newInstance.asInstanceOf[Honeycomb]
   
   var scale = 1f
   

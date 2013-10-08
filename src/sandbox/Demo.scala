@@ -4,42 +4,36 @@ import org.lwjgl.opengl.{ Display, DisplayMode }
 import org.lwjgl.input._
 import locale.Keys
 import math._
-import engine.rendering.{Renderable, SpecialRenderable, ID}
+import engine.rendering.{SpecialRenderable, ID}
 import engine.rendering.Renderer.glLightBuff
 import engine.{Scene, Ticker, Camera}
 import Ticker.Tickable
 import org.lwjgl.opengl.GL11._
 import scala.Some
-import engine.rendering.{CaveRenderer, DefaultRenderer}
+import engine.rendering.{DefaultRenderer}
 import perf.Perf
+import Configuration._
 
 object Demo extends Tickable {
   
   val GAME_TITLE = "Plesiohedrony"
-  val FRAMERATE = 60
-  val SPEED = 0.002f // m/ms
-  val width = 800
-  val height = 600
-  
-  val updateDelay = 200 // ms
-  
-  // set scale to 1 for improved performance
-  Shapes.scale = 1f
+
+  Shapes.scale = propScale
   val scene = new Scene(Shapes.scale == 1f)
-  val renderer = new DefaultRenderer(scene, width, height)
-  //new CaveRenderer(scene, width, height)
+  val renderer = new DefaultRenderer(scene, propWidth, propHeight)
+  //new CaveRenderer(scene, propWidth, propHeight)
     
   var finished = false
 
   def main(args: Array[String]) {
-    var fullscreen = true
+    var fullscreen = false
     for (arg <- args) {
       arg match {
-        case "-window" =>
-          fullscreen = false
+        case "-fullscreen" =>
+          fullscreen = true
       }
     }
-    init(fullscreen)
+    init(fullscreen || propFullscreen)
     
     import Perf.perfed
     
@@ -152,9 +146,9 @@ object Demo extends Tickable {
       renderer.height = Display.getHeight
     } else {
       Display.setFullscreen(false)
-      Display.setDisplayMode(new DisplayMode(width, height))
-      renderer.width = width
-      renderer.height = height
+      Display.setDisplayMode(new DisplayMode(propWidth, propHeight))
+      renderer.width = propWidth
+      renderer.height = propHeight
     }
     Display.setTitle(GAME_TITLE)
     Display.setVSyncEnabled(true)
@@ -184,7 +178,6 @@ object Demo extends Tickable {
     var lastUpdate = lastActivity
 
     Ticker.start
-    import engine.rendering.Picking
     while (!finished) {
 
       Display.update
@@ -202,12 +195,12 @@ object Demo extends Tickable {
 
       val activity = if (Mouse.isButtonDown(0)) ADDING else if (Mouse.isButtonDown(1)) REMOVING else if (Mouse.isButtonDown(2)) INFO else NONE
       val picked = renderer.render(activity != NONE)
-      if ( picked != None && (System.currentTimeMillis - lastActivity) > updateDelay) {
+      if ( picked != None && (System.currentTimeMillis - lastActivity) > propPlayerActionInterval) {
         updateScene(picked, activity)
         lastActivity = System.currentTimeMillis
       }
 
-      Display.sync(FRAMERATE)
+      Display.sync(propFramerate)
     }
     Ticker.exiting = true
     Perf.printResults
@@ -255,7 +248,7 @@ object Demo extends Tickable {
       }
     }
 
-    val speed = SPEED * spentMS * { if ( move_fast ) 5 else 1 }
+    val speed = propPlayerSpeed * spentMS * { if ( move_fast ) 5 else 1 }
     val planarSpeed = if ( move_forward || move_left || move_right || move_back ) 
     	speed
       else

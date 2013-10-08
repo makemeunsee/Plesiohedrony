@@ -9,6 +9,7 @@ import models.container.{Boundable, Bounds, Octree}
 import engine.entity.Player
 import models.container.immutable.OctreeNode
 import models.container.immutable.MOctreeNode
+import sandbox.Configuration
 
 trait Element extends Boundable with Growable[Element]
 
@@ -65,18 +66,18 @@ class Scene(hideTouching: Boolean) extends Tickable {
   
   def getElement(id: ID) = elements.get(id)
   
-  val growChance = 1.3
-  val decayChance = 1
+  val growChance = Configuration.propGrowthRate
+  val decayChance = Configuration.propDecayRate
   val lifeRate = 10000
   
   def tick(tick: Int) {
     val mod = tick % 5
-    if( mod == 0 ) {
+    if( Configuration.propGrowth && mod == 0 ) {
       for ( e <- visible.values )
         if ( math.random * lifeRate < growChance )
           for ( g <- e.growth )
             addElement(g)
-    } else if ( mod == 4 ) {
+    } else if ( Configuration.propDecay && mod == 4 ) {
       for ( e <- elements.values )
         if ( math.random * lifeRate < decayChance )
           for ( id <- e.trunk )
