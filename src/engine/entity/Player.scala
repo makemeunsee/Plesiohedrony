@@ -1,21 +1,131 @@
 package engine.entity
 
-import engine.{Camera, Scene}
-import models.container.{Boundable, Bounds, Octree}
+import engine.Camera
+import models.container.{Boundable, Bounds}
 import scala.math.{Pi}
-import scala.collection.mutable.HashSet
-import scala.collection.immutable.Set
 import models.Point3f
-import engine.rendering.FaceRenderable
-import engine.Element
+import akka.actor.Actor
+import akka.actor.ActorRef
+import Player._
+import scala.collection.mutable.Set
+import akka.actor.Props
+import engine.rendering.ID
+import engine.World
+import client.Configuration
+import engine.Ticker
+import engine.Director
+import akka.event.LoggingReceive
+import ui.ingame.UI3D
 
-class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
+
+object Activity extends Enumeration {
+  type Activity = Value
+  val ADDING = Value("ADD")
+  val REMOVING = Value("REM")
+  val INFO = Value("INF")
+  val NONE = Value("NON")
+}
+
+import Activity._
+import ui.ingame.Actions
+
+object Player {
+  case object Stop
+  case object JoinRequest
+  case class Movement(playerId: Int, move: Point3f)
+  case class LookingAt(playerId: Int, pitch: Float, yaw: Float)
+  case class FaceAction(playerId: Int, faceId: ID, activity: Activity)
+  
+  val no_move = new Point3f(0,0,0)
+}
+
+// TODO: split player into player + mailman + world proxy
+
+class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef) extends Actor {
+  val avatar = new PlayerAvatar(id, self, name)
+  val ui = context.actorOf(Props(classOf[UI3D], avatar, name), "ui3d")
+
+  override def preStart() {
+    world ! World.AddViewer(ui)
+    ticker ! Ticker.HighRateSynchro(self)
+  }
+  
+  override def receive = playing(no_move, None, NONE)
+    
+  def playing(movement: Point3f, pick: Option[ID], activity: Activity): Receive = {
+    // director stop the game
+    case Director.Stop => context.parent ! Director.Stop
+    // player exits the game
+    case Actions.ExitRequest => context.parent ! Stop
+    
+    // collect actions
+    case a: Actions.Move =>
+      val vec = handleMovement(a)
+      context.become(playing(movement + vec, pick, activity))
+      avatar.move(vec)
+    case Actions.Picked(faceId, a) =>
+      context.become(playing(movement, Some(faceId), a))
+    
+    case pos: World.Position => if ( pos.id != id) ui ! pos else avatar.setXYZ(pos.at.x, pos.at.y, pos.at.z)
+    case look: LookingAt => if ( look.playerId != id) ui ! look
+    case l: World.PlayerList => ui ! l
+    case World.FaceInfo(s) => println(s)
+    
+    // send actions at each tick
+    case Ticker.Tick(_) =>
+      if ( movement != no_move ) world ! Movement(id, movement)
+      pick map ( world ! FaceAction(id, _, activity) )
+      world ! LookingAt(id, avatar.getPitch.toFloat, avatar.getYaw.toFloat)
+      context.become(playing(no_move, None, NONE))
+
+  }
+
+  private def handleMovement(a: Actions.Move): Point3f = {
+
+    val moveAngle = avatar.getPitch + {
+      (a.forward, a.backward, a.left, a.right) match {
+        case (true, _, true, _) => -Math.PI / 4
+        case (true, _, false, true) => Math.PI / 4
+        case (true, _, false, false) => 0
+        case (false, true, true, _) => -3* Math.PI / 4
+        case (false, true, false, true) => 3*Math.PI / 4
+        case (false, true, false, false) => Math.PI
+        case (false, false, true, _) => -Math.PI / 2
+        case (false, false, false, true) => Math.PI / 2
+        case _ => 0
+      }
+    }
+
+    val speed = Configuration.propPlayerSpeed * a.duration * { if ( a.speed ) 5 else 1 }
+    val planarSpeed = if ( a.forward || a.backward || a.left || a.right ) 
+        speed
+      else
+        0
+
+    if ( planarSpeed != 0 || a.up || a.down ) {
+      val moveY = Math.cos(moveAngle).toFloat * planarSpeed
+      val moveX = Math.sin(moveAngle).toFloat * planarSpeed 
+      val moveZ = if (a.up) speed else if (a.down) -speed else 0
+      
+      new Point3f(moveX, moveY, moveZ)
+    } else
+      no_move
+  }
+}
+
+class PlayerAvatar(val id: Int, val ref: ActorRef, val name: String)
+    extends Camera(Pi / 2d,0,0,0,0) with Boundable {
 
   val radius = 0.5f
   val squareRadius = radius*radius
   
-  // TODO: stretch along z?
-  // player bounds is a sphere
+  def move(mv: Point3f) {
+    setXYZ(getX + mv.x, getY + mv.y, getZ + mv.z)
+  }
+  
+  def getXYZ = new Point3f(getX, getY, getZ)
+  
+  // player bounds are a sphere
   def within(bounds: Bounds) = perf.Perf.perfed("player within") {
     val position = (bounds._1 <= getX, bounds._2 > getX,
       bounds._3 <= getY, bounds._4 > getY,
@@ -58,75 +168,5 @@ class Player(scene: Scene) extends Camera(Pi / 2d,0,0,0,0) with Boundable {
     }
   }
   
-  val colliding = new HashSet[Element]
-    
-  import util.Collections.successivePairsCycling
-  private def pointInsideFace[T <: FaceRenderable](face: T, p: Point3f): Boolean = {
-    successivePairsCycling(face.toContour.toList).forall { case (pA, pB) =>
-      // for each edge AB, check direction of AB ^ AP to know on which side of AB lies P
-      ((pB - pA) ^ (p - pA)) * face.normal > 0
-    }
-  }
-  
-  private def circleIntersectsFaceEdge[T <: FaceRenderable](face: T, pO: Point3f, r: Float): Boolean = {
-    successivePairsCycling(face.toContour.toList).exists{ case (pA, pB) =>
-       // compute distance between circle center O and line AB
-      val vAO = pO - pA
-      val vBO = pO - pB
-      // either point in inside the circle
-      vAO * vAO < r * r ||
-      vBO * vBO < r * r || {
-        // or the projection of the circle center is inside the segment
-        val vAB = (pB - pA)
-        val u = vAB.normalize
-        val d = (vAO ^ u).norm
-        // not too far to project
-        d < r && {
-          // compute projection P of center O on AB
-          val dAP = vAO * u
-          val pP = pA + (u * dAP)
-          // P must be between A and B
-          (pA - pP) * (pB - pP) < 0
-        }
-      }
-    }
-  }
-  
-  def collide[T <: FaceRenderable](position: Point3f, suspects: Set[T]): Set[T] = perf.Perf.perfed("collide") {
-    // center to center vector
-    suspects.filter{ face =>
-      val n = face.normal
-      val fCenter = face.center
-      // player center to center of the face
-      val vec = position - fCenter
-      // project along normal => distance between face and player center
-      val d = math.abs(vec * n)
-      // bounding sphere must at least intersects the face plane
-      d * d < squareRadius && {
-        // distance is not enough, check if projection inside face
-        
-        // the bounding sphere of the player intersects the face plane, forming a circle
-        // center of the circle of intersection
-        val pCenter = position - (n * d)
-        // radius of the circle of intersection
-        val r = math.sqrt(squareRadius - d*d).toFloat
-        
-        // intersection circle is inside the face polygon or
-        // it intersects an edge of the face polygon
-        pointInsideFace(face, pCenter) || circleIntersectsFaceEdge(face, pCenter, r)
-      }
-    }
-  }
-  
-  override def setXYZ(newX: Float, newY: Float, newZ: Float) = perf.Perf.perfed("move player") {
-    if (getX != newX || getY != newY || getZ != newZ) {
-      val neighbors = scene.octree.valuesAt(this)
-      colliding.clear
-      colliding ++= collide(new Point3f(newX, newY, newZ), neighbors)
-      if ( colliding.isEmpty)
-        super.setXYZ(newX, newY, newZ)
-    }
-  }
-  
-  override def toString = s"Player @ $getX - $getY - $getZ"
+  override def toString = s"Player $name $id @ $getX - $getY - $getZ"
 }

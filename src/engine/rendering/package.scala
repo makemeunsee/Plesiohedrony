@@ -12,6 +12,7 @@ package object rendering {
     def color: Color3B
     def toTriangles: Iterable[(Point3f, Point3f, Point3f)]
     def toContour: Iterable[Point3f]
+    def normal: Point3f
   }
   
   trait SpecialRenderable {
@@ -23,7 +24,8 @@ package object rendering {
     // which other triangle this is touching
     def touching: ID
     def center: Point3f
-    def normal: Point3f
+    def polyhedronCenter: Point3f
+    def distanceToPolyhedronCenter: Float
   }
 
   trait Pickable extends FaceRenderable {

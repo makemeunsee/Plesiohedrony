@@ -8,18 +8,140 @@ import org.lwjgl.opengl.Display
 import perf.Perf.perfed
 import models.Point3f
 import models.container.{Boundable, Octree}
-import scala.collection.mutable.ArrayBuffer
 import util.Collections.successivePairsCycling
-import engine.Element
+import engine.Camera
+import math._
 
-abstract class Renderer(val scene: Scene, var width: Int, var height: Int) {
+abstract class Renderer(var width: Int, var height: Int) {
   def init: Unit
   def render(picking: Boolean = false, lastHit: Option[ID] = None): Option[ID]
 }
 
-class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h) {
+object DefaultRenderer {
+  
+  import util.Math.SQRTS._
+  
+  val P1 = new Point3f (1f, -1f / SQRT_3, -1f / SQRT_6)
+  val P2 = new Point3f (-1f, -1f / SQRT_3, -1f / SQRT_6)
+  val P3 = new Point3f (0, 2 / SQRT_3, -1f / SQRT_6)
+  val P4 = new Point3f (0, 0, 3f / SQRT_6)
+  
+  val I1 = new Point3f (-1f, 1f / SQRT_3, 1f / SQRT_6)
+  val I2 = new Point3f (1f, 1f / SQRT_3, 1f / SQRT_6)
+  val I3 = new Point3f (0, -2f / SQRT_3, 1f / SQRT_6)
+  val I4 = new Point3f (0, 0, -3f / SQRT_6)
+  
+  val shaped = Seq(
+        ((P1, P3, P4), -P2.normalize),
+        ((P2, P1, P4), -P3.normalize),
+        ((P1, P2, P3), -P4.normalize),
+        ((P2, P4, P3), -P1.normalize),
+        ((I3, I1, I4), -I2.normalize),
+        ((I1, I2, I4), -I3.normalize),
+        ((I2, I1, I3), -I4.normalize),
+        ((I4, I2, I3), -I1.normalize)
+        )
+        
+  def playerPositionToPlayerRenderables(at: Point3f): Seq[Renderable] =
+    shaped map { case (triangle, n) => new Renderable {
+      def color = (-105, 40, -75)
+      
+      def normal = n
+    
+      def toTriangles = Seq((at + triangle._1, at + triangle._2, at + triangle._3))
+    
+      def toContour = {
+        val p1 = triangle._1
+        val p2 = triangle._2
+        val p3 = triangle._3
+        Seq(p1, p2, p3, (p3+p1)/2, (p2+p3)/2, (p1+p2)/2, (p3+p1)/2) map ( _ + at )
+      }
+      
+    } }
+}
 
-  protected def visibles = scene.visible
+import DefaultRenderer._
+
+class DefaultRenderer(camera: Camera, w: Int, h: Int) extends Renderer(w, h) {
+
+  var visibles = Map.empty[ID, Pickable]
+  var players = Map.empty[Int, (Point3f, Float, Float)]
+  var sunAngle = 0d
+    
+  // artificial ground
+  import scala.collection.mutable.ArrayBuffer
+  val wireframes = perfed("grid floor") {
+    import sandbox.Shapes
+    Shapes.gridFloor(20)
+  }
+  
+  val sun = new SpecialRenderable {
+    val sunDistance = 100
+    val sunSize = 10
+    val winterFactor = 0.5f
+    val summerFactor = math.sqrt(1 - winterFactor * winterFactor).toFloat
+
+    def render {
+      glPushMatrix
+
+      val sunX = summerFactor*sunDistance*sin(sunAngle).toFloat
+      val sunY = summerFactor*sunDistance*cos(sunAngle).toFloat
+      glTranslatef(sunX,-sunDistance*winterFactor,sunY)
+      glRotatef(sunAngle.toDegrees.toFloat,0,1,0)
+      glRotatef(45,1,0,0)
+
+      // sun face
+      glColor3f(1f, 1f, 0.7f)
+      glDisable(GL_LIGHTING)
+      glDisable(GL_TEXTURE)
+      glPolygonMode(GL_FRONT, GL_FILL)
+      glBegin(GL_QUADS)
+      glVertex3f(sunSize,sunSize,0)
+      glVertex3f(sunSize,-sunSize,0)
+      glVertex3f(-sunSize,-sunSize,0)
+      glVertex3f(-sunSize,sunSize,0)
+      glEnd
+
+      // sun light
+      glLightBuff(GL_LIGHT0, GL_POSITION, Array(0f,0,1,0))
+      //    glLightBuff(GL_LIGHT0, GL_AMBIENT, Array(0f,0,0,0))
+      //    glLightBuff(GL_LIGHT0, GL_SPECULAR, Array(0f,0,0,0))
+      glLightBuff(GL_LIGHT0, GL_DIFFUSE, Array(0.8f,0.4f,0.2f,0))
+
+      glPopMatrix
+    }
+  }
+
+  val moon = new SpecialRenderable {
+    val moonDistance = 100
+    val moonSize = 10
+    val angle = 1.5f
+    val x = moonDistance*sin(angle).toFloat
+    val y = moonDistance*cos(angle).toFloat
+    
+    def render {
+      glPushMatrix
+
+      glTranslatef(x,0,y)
+      glRotatef(angle.toDegrees.toFloat,0,1,0)
+
+      // moon face
+      glColor3f(0.6f, 0.6f, 0.7f)
+      glDisable(GL_LIGHTING)
+      glDisable(GL_TEXTURE)
+      glPolygonMode(GL_FRONT, GL_FILL)
+      glBegin(GL_QUADS)
+      glVertex3f(moonSize,moonSize,0)
+      glVertex3f(moonSize,-moonSize,0)
+      glVertex3f(-moonSize,-moonSize,0)
+      glVertex3f(-moonSize,moonSize,0)
+      glEnd
+
+      glPopMatrix
+    }
+  }
+  
+  val translationlessRenderables = Set(moon, sun)
 
   def init() {
 
@@ -56,22 +178,21 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
     // 'moonlight' ambient
     glLightBuff(GL_LIGHT0, GL_AMBIENT, Array(0.2f,0.3f,0.4f,0))
   }
-
+  
   def render(picking: Boolean = false, lastHit: Option[ID] = None): Option[ID] = perfed ("render") {
     if (picking) {
       glDisable(GL_LIGHTING)
       glDisable(GL_LIGHT0)
       glDisable(GL_TEXTURE)
-      //glPolygonMode(GL_FRONT, GL_FILL)
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
       glLoadIdentity
 
       glPushMatrix
 
-      scene.camera.applyToWorld
-
+      camera.applyToWorld
+      
       glBegin(GL_TRIANGLES)
-      val inRange = perfed("visible") { Picking.filter(visibles.values, scene.camera.position) }
+      val inRange = perfed("visible") { Picking.filter(visibles.values, camera.position) }
       inRange.foreach{ case (pickingColor, g) => render(g, pickingColor, g.normal) }
       glEnd
 
@@ -79,7 +200,6 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
 
       glEnable(GL_LIGHT0)
       glEnable(GL_LIGHTING)
-      //glPolygonMode(GL_FRONT, GL_FILL)
       render(false, Picking.readPicking((width / 2, height / 2), inRange, {p: Pickable => p.id}))
       //lastHit
     } else {
@@ -88,14 +208,13 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
 
       glPushMatrix
 
-      scene.camera.rotateWorld
+      camera.rotateWorld
       renderInfinitelyFar
-      scene.camera.translateWorld
+      camera.translateWorld
 
       renderObjects(lastHit)
+      renderPlayers
       renderGrid
-      // debug: view octree leaves
-      //renderOctree
 
       glPopMatrix
 
@@ -107,7 +226,7 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
     }
   }
 
-  protected def render(r: FaceRenderable) {
+  protected def render(r: Renderable) {
     render(r, r.color, r.normal)
   }
   
@@ -143,42 +262,72 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
     glNormal3f(n.x, n.y, n.z)
     r.toTriangles.map(drawTriangle)
   }
+  
+  private def renderPlayers {
+    glEnable(GL_LIGHTING)
+    glPolygonMode(GL_FRONT, GL_FILL)
+    glEnable( GL_POLYGON_OFFSET_FILL )      
+    glPolygonOffset( 1f, 1f )
+    
+    for ( player <- players.values ;
+          pos = player._1 ) {
+     
+      glPushMatrix
+    
+      glTranslatef(pos._1, pos._2, pos._3)
+      glRotatef(player._2.toDegrees.toFloat, 0, 0, -1)
+      glTranslatef(-pos._1, -pos._2, -pos._3)
+    
+      glBegin(GL_TRIANGLES)
+      playerPositionToPlayerRenderables(pos) map render
+      glEnd
+    
+      glDisable(GL_LIGHTING)
+      glDisable( GL_POLYGON_OFFSET_FILL )
+      glPolygonMode(GL_FRONT, GL_LINE)
+      glColor3f(0.2f,0.2f,0.2f)
+    
+      glBegin(GL_LINES)
+      playerPositionToPlayerRenderables(pos) map renderLine
+      glColor3ub(-1, 0, 0)
+      glVertex3f(pos.x, pos.y, pos.z)
+      glVertex3f(pos.x, pos.y + 2 * sin(player._3).toFloat, pos.z - 2 * cos(player._3).toFloat)
+    
+      glEnd
+      
+      glPopMatrix
+    }
+  }
     
   private def renderObjects(lastHit: Option[ID]) {
     glEnable(GL_LIGHTING)
     glPolygonMode(GL_FRONT, GL_FILL)
+    glEnable( GL_POLYGON_OFFSET_FILL )      
+    glPolygonOffset( 1f, 1f )
+    
     glBegin(GL_TRIANGLES)
     lastHit match {
-      case None => visibles.map{ case (id, v) =>
-        // debug code to see collisions
-        if ( scene.player.colliding.contains(v))
-          render(v, (-1,0,0), v.normal) 
-        else
-         render(v)
-      }
-      case Some(faceId) => visibles.map(o => {
-        val g = o._2
+      case None => visibles.values map { render(_) }
+      case Some(faceId) => visibles.values.map { g =>
         if (g.id == faceId)
           renderPicked(g)
         else
           render(g)
-      })}
-    // show edges of polyhedrons. was ugly...
-    //    visibles.map(v => render(v._2))
-    //    lastHit.map( faceId => visible.get(faceId).map { g =>
-    //      glDisable(GL_LIGHTING)
-    //      glPolygonMode(GL_FRONT, GL_LINE)
-    //      glColor3f(0,0,0)
-    //      glLineWidth(2)
-    //      glBegin(GL_LINES)
-    //      renderLine(g)
-    //      glEnd
-    //    })
+      }
+    }
+    glEnd
+    
+    glDisable(GL_LIGHTING)
+    glDisable( GL_POLYGON_OFFSET_FILL )
+    glPolygonMode(GL_FRONT, GL_LINE)
+    glColor3f(1,1,1)
+    glBegin(GL_LINES)
+    visibles.values.map { renderLine(_) }
     glEnd
   }
 
   private def renderInfinitelyFar {
-    scene.translationlessRenderables.foreach(_.render)
+    translationlessRenderables.foreach(_.render)
   }
 
   private def renderHud() {
@@ -197,32 +346,7 @@ class DefaultRenderer(scene: Scene, w: Int, h: Int) extends Renderer(scene, w, h
     glDisable(GL_LIGHTING)
     glLineWidth(1)
     glBegin(GL_LINES)
-    scene.wireframes.map(renderLine)
-    glEnd
-  }
-
-  private def renderOctree(octree: Octree[Element]): Unit = {
-    for ( quad <- octree.quads; pair <- successivePairsCycling(quad) ) {
-      if(octree.depth == Octree.maxDepth) {
-        if(!octree.empty) {
-//          if(octree.values.contains(scene.player))
-//            glColor3f(1f,0.3f,0.3f)
-//          else 
-            glColor3f(0.3f,0.3f,0.3f)
-          glVertex3f(pair._1.x, pair._1.y, pair._1.z)
-          glVertex3f(pair._2.x, pair._2.y, pair._2.z)
-        }
-      }
-    }
-    for ( kids <- octree.children; kid <- kids )
-      renderOctree(kid)
-  }
-
-  private def renderOctree {
-    glDisable(GL_LIGHTING)
-    glLineWidth(1)
-    glBegin(GL_LINES)
-    renderOctree(scene.octree)
+    wireframes.map(renderLine)
     glEnd
   }
 }

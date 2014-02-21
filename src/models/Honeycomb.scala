@@ -1,6 +1,6 @@
 package models
 
-trait Honeycomb {
+trait Honeycomb extends Serializable {
   import Honeycomb.{Polyhedron}
   
   def polyhedron(i: Int, j: Int, k: Int, polyId: Int): Polyhedron
@@ -20,13 +20,7 @@ object Honeycomb {
     override def toString = s"FaceId($i, $j, $k, ${face.polyId}, ${face.id})"
   }
 
-  private val nextIndex: (() => Int) = {
-    var index = -1
-    () => { index += 1; index }
-  }
-
-  abstract case class Face(val polyId: Int, val polygon: Polygon) {
-    val id = nextIndex()
+  abstract case class Face(val id: Int, val polyId: Int, val polygon: Polygon) {
     def opposite(i:Int, j: Int, k: Int): FaceId
     def withOrigin(origin: Point3f): Polygon = polygon.translate(origin)
   }

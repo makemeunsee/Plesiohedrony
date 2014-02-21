@@ -1,5 +1,7 @@
 package util
 
+import scala.language.implicitConversions
+
 object Geometry {
   def cubeBounds[T](center: (T, T, T), cubeHalfWidth: T)(implicit num: Numeric[T]): (T, T, T, T, T, T) = {
     import num._

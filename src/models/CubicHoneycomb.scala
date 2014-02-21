@@ -36,12 +36,12 @@ object CubicHoneycomb {
         }
     }
 
-    object Top    extends Face(0, new Quad(List(TopNE,    TopNW,    TopSW,    TopSE))) with CubicFace
-    object Bottom extends Face(0, new Quad(List(BottomSE, BottomSW, BottomNW, BottomNE))) with CubicFace
-    object North  extends Face(0, new Quad(List(TopNW,    TopNE,    BottomNE, BottomNW))) with CubicFace
-    object South  extends Face(0, new Quad(List(TopSE,    TopSW,    BottomSW, BottomSE))) with CubicFace
-    object East   extends Face(0, new Quad(List(TopNE,    TopSE,    BottomSE, BottomNE))) with CubicFace
-    object West   extends Face(0, new Quad(List(TopNW,    BottomNW, BottomSW, TopSW))) with CubicFace
+    object Top    extends Face(0, 0, new Quad(List(TopNE,    TopNW,    TopSW,    TopSE))) with CubicFace
+    object Bottom extends Face(1, 0, new Quad(List(BottomSE, BottomSW, BottomNW, BottomNE))) with CubicFace
+    object North  extends Face(2, 0, new Quad(List(TopNW,    TopNE,    BottomNE, BottomNW))) with CubicFace
+    object South  extends Face(3, 0, new Quad(List(TopSE,    TopSW,    BottomSW, BottomSE))) with CubicFace
+    object East   extends Face(4, 0, new Quad(List(TopNE,    TopSE,    BottomSE, BottomNE))) with CubicFace
+    object West   extends Face(5, 0, new Quad(List(TopNW,    BottomNW, BottomSW, TopSW))) with CubicFace
   }
   import Faces._
   

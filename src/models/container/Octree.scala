@@ -16,6 +16,8 @@ import Octree._
 
 // immutable octree
 trait Octree[T <: Boundable] {
+  import scala.collection.Set
+  
   def depth: Int
   def center: (Int, Int, Int)
   def bounds: Bounds = cubeBounds(center, width / 2)

@@ -13,6 +13,8 @@ class Point3f(val x: Float, val y: Float, val z: Float) extends Tuple3(x, y, z) 
     
     def -(other: Point3f) = arithOp((x1, x2) => x1 - x2)(other)
     
+    def unary_- = new Point3f(-x, -y, -z)
+    
     // scalar product
     def *(other: Point3f) = {
       val prod = arithOp((x1, x2) => x1 * x2)(other)
@@ -36,6 +38,13 @@ class Point3f(val x: Float, val y: Float, val z: Float) extends Tuple3(x, y, z) 
     }
     
     def norm = math.sqrt(this * this)
+    
+    def round(digits: Int) = {
+      assert (digits > -1)
+      val mult = math.pow(10, digits)
+      def round(f: Float) = math.round(f * mult) / mult
+      new Point3f(round(x), round(y), round(z))
+    }
     
     override def toString = s"($x, $y, $z)"
   }

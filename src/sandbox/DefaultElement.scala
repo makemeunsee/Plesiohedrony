@@ -8,19 +8,33 @@ import DefaultElement._
 import engine.Element
 import models.container.Bounds
 import models.container.Boundable
+import models.Point3f
 
 object DefaultElement {
   
   def polyhedronToElements(honeycomb: Honeycomb, scale: Float = 1)(poly: Polyhedron): Iterable[Element] = perfed("polyhedronToElements") {
+    val pCenter = poly.center
     poly.faces.map( face => perfed("element") {
-      new DefaultElement(poly.i,
-        poly.j,
-        poly.k,
-        poly.id,
-        face,
-        poly.origin,
-        honeycomb,
-        scale)
+      val radius = (face.withOrigin(poly.origin).toContour.head - pCenter).norm.toFloat
+      if ( scale == 1 )
+        new DefaultElement(poly.i,
+          poly.j,
+          poly.k,
+          face,
+          pCenter,
+          radius,
+          poly.origin,
+          honeycomb)
+      else
+        new ScaledElement(poly.i,
+          poly.j,
+          poly.k,
+          face,
+          pCenter,
+          radius,
+          poly.origin,
+          honeycomb,
+          scale)
     })
   }
   
@@ -32,10 +46,14 @@ object DefaultElement {
   import org.lwjgl.opengl.GL11.{glVertex3f}
 }
 
-class DefaultElement(i: Int, j: Int, k: Int, polyId: Int, face: Face, origin: Point3f, honeycomb: Honeycomb, scale: Float) extends Element {
+case class DefaultElement(i: Int, j: Int, k: Int, face: Face,
+    val polyhedronCenter: Point3f, val distanceToPolyhedronCenter: Float,
+    origin: Point3f, honeycomb: Honeycomb)
+    extends Element {
+  
   def id = (i, j, k, face.id)
   
-  //TODO equals and hashcode must be reviewed, they're not consistent when different honeycombs or scales are involved
+  //TODO equals and hashcode must be reviewed, they're not consistent when different honeycombs are involved
   override def equals(other: Any): Boolean = other match {
     case elem: Element => id == elem.id
     case _ => false
@@ -45,7 +63,7 @@ class DefaultElement(i: Int, j: Int, k: Int, polyId: Int, face: Face, origin: Po
   
   def pickedColor = DARK_GREY
   
-  val positionedPolygon = if ( scale != 1f) face.polygon.scaled(scale).translate(origin) else face.withOrigin(origin)
+  val positionedPolygon = face.withOrigin(origin)
   
   def drawables = positionedPolygon.toTriangles
   
@@ -57,15 +75,15 @@ class DefaultElement(i: Int, j: Int, k: Int, polyId: Int, face: Face, origin: Po
   
   def toTriangles = positionedPolygon.toTriangles
   
-  val center = positionedPolygon.center
+  lazy val center = positionedPolygon.center
   
   def growth: Iterable[Element] = {
     val opposite = face.opposite(i, j, k)
     val neighPoly = honeycomb.polyhedron(opposite.i, opposite.j, opposite.k, opposite.face.polyId)
-    polyhedronToElements(honeycomb, scale)(neighPoly)
+    polyhedronToElements(honeycomb)(neighPoly)
   }
 
-  def trunk: Iterable[ID] = perfed("trunk") { honeycomb.polyhedron(i,j,k,polyId).faces.map(f => (i, j, k, f.id)) }
+  def trunk: Iterable[ID] = perfed("trunk") { honeycomb.polyhedron(i,j,k,face.polyId).faces.map(f => (i, j, k, f.id)) }
   
   def touching = perfed("touching") {
     val faceId = face.opposite(i, j, k)
@@ -96,4 +114,21 @@ class DefaultElement(i: Int, j: Int, k: Int, polyId: Int, face: Face, origin: Po
   }
   
   override def toString = s"$id"
+}
+  
+class ScaledElement(i: Int, j: Int, k: Int, face: Face,
+    polyhedronCenter: Point3f, distanceToPolyhedronCenter: Float,
+    origin: Point3f, honeycomb: Honeycomb, scale: Float)
+    
+    extends DefaultElement(i, j, k, face,
+        polyhedronCenter, distanceToPolyhedronCenter,
+        origin, honeycomb) {
+  
+  override val positionedPolygon = face.withOrigin(origin).scaled(scale, polyhedronCenter)
+      
+  override def growth: Iterable[Element] = {
+    val opposite = face.opposite(i, j, k)
+    val neighPoly = honeycomb.polyhedron(opposite.i, opposite.j, opposite.k, opposite.face.polyId)
+    polyhedronToElements(honeycomb, scale)(neighPoly)
+  }
 }

@@ -6,7 +6,7 @@ import scala.collection.mutable.HashSet
 
 // yaw: angle between (0,0,-1) and eyeVector
 // pitch: angle between plan(y = 0) and eyeVector
-class Camera(private var yaw: Double, private var pitch: Double, private var x: Float, private var y: Float, private var z: Float) {
+case class Camera(private var yaw: Double, private var pitch: Double, private var x: Float, private var y: Float, private var z: Float) {
   
   def applyToWorld {
     rotateWorld
@@ -37,9 +37,9 @@ class Camera(private var yaw: Double, private var pitch: Double, private var x: 
   def getPitch = pitch
   def getYaw = yaw
   
-  def setPitchAndYaw(newPitch: Double, newYaw: Double) {
-    pitch = newPitch
-    yaw = newYaw
+  def updatePitchAndYaw(dPitch: Double, dYaw: Double) {
+    pitch += dPitch
+    yaw += dYaw
     if (yaw > math.Pi) yaw = math.Pi
     else if (yaw < 0) yaw = 0
     if (pitch >= 2*math.Pi) pitch -= 2*math.Pi

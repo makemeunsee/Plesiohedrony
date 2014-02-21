@@ -84,23 +84,23 @@ object TriakisTruncatedTetraHoneycomb {
     }
 
     val firstId = TriakisTruncatedTetra1.id
-    object B0  extends Face(firstId, new Triangle(Bottom, BottomNE, BottomS)) with TriakisFace
-    object B1  extends Face(firstId, new Triangle(Bottom, BottomNW, BottomNE)) with TriakisFace
-    object B2  extends Face(firstId, new Triangle(Bottom, BottomS, BottomNW)) with TriakisFace
-    object S0  extends Face(firstId, new Triangle(South, SouthB, SouthNE)) with TriakisFace
-    object S1  extends Face(firstId, new Triangle(South, SouthNE, SouthNW)) with TriakisFace
-    object S2  extends Face(firstId, new Triangle(South, SouthNW, SouthB)) with TriakisFace
-    object NW0 extends Face(firstId, new Triangle(NorthWest, NorthWestB, NorthWestS)) with TriakisFace
-    object NW1 extends Face(firstId, new Triangle(NorthWest, NorthWestS, NorthWestNE)) with TriakisFace
-    object NW2 extends Face(firstId, new Triangle(NorthWest, NorthWestNE, NorthWestB)) with TriakisFace
-    object NE0 extends Face(firstId, new Triangle(NorthEast, NorthEastS, NorthEastB)) with TriakisFace
-    object NE1 extends Face(firstId, new Triangle(NorthEast, NorthEastNW, NorthEastS)) with TriakisFace
-    object NE2 extends Face(firstId, new Triangle(NorthEast, NorthEastB, NorthEastNW)) with TriakisFace
+    object B0  extends Face(0,  firstId, new Triangle(Bottom, BottomNE, BottomS)) with TriakisFace
+    object B1  extends Face(1,  firstId, new Triangle(Bottom, BottomNW, BottomNE)) with TriakisFace
+    object B2  extends Face(2,  firstId, new Triangle(Bottom, BottomS, BottomNW)) with TriakisFace
+    object S0  extends Face(3,  firstId, new Triangle(South, SouthB, SouthNE)) with TriakisFace
+    object S1  extends Face(4,  firstId, new Triangle(South, SouthNE, SouthNW)) with TriakisFace
+    object S2  extends Face(5,  firstId, new Triangle(South, SouthNW, SouthB)) with TriakisFace
+    object NW0 extends Face(6,  firstId, new Triangle(NorthWest, NorthWestB, NorthWestS)) with TriakisFace
+    object NW1 extends Face(7,  firstId, new Triangle(NorthWest, NorthWestS, NorthWestNE)) with TriakisFace
+    object NW2 extends Face(8,  firstId, new Triangle(NorthWest, NorthWestNE, NorthWestB)) with TriakisFace
+    object NE0 extends Face(9,  firstId, new Triangle(NorthEast, NorthEastS, NorthEastB)) with TriakisFace
+    object NE1 extends Face(10, firstId, new Triangle(NorthEast, NorthEastNW, NorthEastS)) with TriakisFace
+    object NE2 extends Face(11, firstId, new Triangle(NorthEast, NorthEastB, NorthEastNW)) with TriakisFace
 
-    object HexaT  extends Face(firstId, new Hexad(List(NorthEastS, NorthEastNW, NorthWestNE, NorthWestS, SouthNW, SouthNE))) with TriakisFace
-    object HexaSE extends Face(firstId, new Hexad(List(NorthEastS, NorthEastB, BottomNE, BottomS, SouthB, SouthNE).reverse)) with TriakisFace
-    object HexaSW extends Face(firstId, new Hexad(List(NorthWestS, NorthWestB, BottomNW, BottomS, SouthB, SouthNW))) with TriakisFace
-    object HexaN  extends Face(firstId, new Hexad(List(NorthEastNW, NorthEastB, BottomNE, BottomNW, NorthWestB, NorthWestNE))) with TriakisFace
+    object HexaT  extends Face(12, firstId, new Hexad(List(NorthEastS, NorthEastNW, NorthWestNE, NorthWestS, SouthNW, SouthNE))) with TriakisFace
+    object HexaSE extends Face(13, firstId, new Hexad(List(NorthEastS, NorthEastB, BottomNE, BottomS, SouthB, SouthNE).reverse)) with TriakisFace
+    object HexaSW extends Face(14, firstId, new Hexad(List(NorthWestS, NorthWestB, BottomNW, BottomS, SouthB, SouthNW))) with TriakisFace
+    object HexaN  extends Face(15, firstId, new Hexad(List(NorthEastNW, NorthEastB, BottomNE, BottomNW, NorthWestB, NorthWestNE))) with TriakisFace
 
     val Tetra1Faces: List[Face] = List(
       HexaT, HexaSE, HexaSW, HexaN,
@@ -114,7 +114,7 @@ object TriakisTruncatedTetraHoneycomb {
     val southWestTranslation = NorthWestS + BottomS
     val upTranslation = new Point3f(0,0,NorthWestS.z - BottomNW.z)
 
-    private val TetraFaces: Map[Face, Face] = Tetra1Faces.map(f => (f, new Face(TriakisTruncatedTetra2.id, f.polygon.pointSymetry(TriakisTruncatedTetra1.center).reverse.translate(northTranslation)) with TriakisFace)).toMap
+    private val TetraFaces: Map[Face, Face] = Tetra1Faces.map(f => (f, new Face(f.id, TriakisTruncatedTetra2.id, f.polygon.pointSymetry(TriakisTruncatedTetra1.center).reverse.translate(northTranslation)) with TriakisFace)).toMap
 
     val HexaB  = TetraFaces(HexaT)
     val HexaNW = TetraFaces(HexaSE)

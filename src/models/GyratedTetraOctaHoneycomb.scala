@@ -24,6 +24,10 @@ class GyratedTetraOctaHoneycomb extends Honeycomb {
 
 object GyratedTetraOctaHoneycomb {
   
+  val regular_faces_count = 16
+  
+  def idAfterGyration(id: Int) = (id + regular_faces_count) % (regular_faces_count*2)
+  
   trait GTOHPolyhedron extends Polyhedron with TOHCoordinates {
     override def origin = new Point3f(i + j * 0.5f, j * SQRTS.SQRT_3_BY_2, k * SQRTS.SQRT_6_BY_3)
   }
@@ -76,10 +80,10 @@ object GyratedTetraOctaHoneycomb {
 
     private def toGyratedFace(f: Face) = {
       val t = f.polygon.toTriangles.head
-      new Face( f.polyId, ySymmetry(new Triangle(t._1, t._3, t._2), Octahedron0.center.y)) with GyratedOctaTetraFace
+      new Face( idAfterGyration(f.id), f.polyId, ySymmetry(new Triangle(t._1, t._3, t._2), Octahedron0.center.y)) with GyratedOctaTetraFace
     }
 
-    def toRegularFace(f: Face) = new Face( f.polyId, f.polygon) with GyratedOctaTetraFace
+    def toRegularFace(f: Face) = new Face( f.id, f.polyId, f.polygon) with GyratedOctaTetraFace
 
     import TetraOctaHoneycomb.Faces._
     // gyrated octahedron faces

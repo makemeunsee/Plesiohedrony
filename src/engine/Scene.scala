@@ -1,70 +1,98 @@
 package engine
 
-import scala.collection.mutable.ArrayBuffer
-import engine.Ticker.Tickable
-import rendering.{Growable, Renderable, SpecialRenderable, ID}
-import collection.mutable
+import rendering.{Renderable, Growable, SpecialRenderable, ID}
 import perf.Perf.perfed
-import models.container.{Boundable, Bounds, Octree}
-import models.container.immutable.OctreeNode
-import engine.entity.Player
+import models.container.{Boundable, Octree}
+import engine.physics.{Physics, Collidable}
+import scala.collection.immutable.HashMap
+import scala.collection.mutable
+import akka.actor.ActorRef
+import engine.World.{VisibleAdded, VisibleRemoved}
 
 trait Element extends Boundable with Growable[Element]
 
-class Scene(hideTouching: Boolean) extends Tickable {
+case class Scene[A <: Collidable[A]](hideTouching: Boolean,
+                                       physics: Physics[A],
+                                       viewers: mutable.Set[ActorRef],
+                                       elements: Map[ID, Element] = new HashMap[ID, Element])
+                                       (implicit elementToA: Element => A) {
 
-  var octree: Octree[Element] = new OctreeNode[Element]((0,0,0), 0)
-  // TODO test immutable/mutable perf, tidy code
   
-  val player = new Player(this)
-  val camera = player
-
-  val wireframes = new ArrayBuffer[Renderable]
-  private val elements = new mutable.HashMap[ID, Element]
-  val visible = new mutable.HashMap[ID, Element]
-  val translationlessRenderables = new mutable.HashSet[SpecialRenderable]
-
-  def addWireframe(drawable: Renderable) {
-    wireframes += drawable
+  def addObject(o: Iterable[Element]): Scene[A] = {
+    o.foldLeft(this) { case (lastScene, element) =>
+      lastScene.addElement(element)
+    }
   }
   
-  def addElement(element: Element) = perfed("addElement") {
-    addGrowable(element)
-    octree += element
+  def removeObject(o: Iterable[ID]): Scene[A] = {
+    o.flatMap(getElement(_)).foldLeft(this) { case (lastScene, element) =>
+      lastScene.removeElement(element)
+    }
   }
   
-  def removeElement(element: Element) = perfed("removeElement") {
-    removeGrowable(element.id)
-    octree -= element
+  private def addElement(e: Element): Scene[A] = perfed("addElement") {
+    elements.get(e.id) match {
+      case Some(_) => this
+      case _ => {
+        onElement(
+          e => elementAdded(e),
+          (e, touching) => {
+            elementRemoved(e)
+            elementRemoved(touching)
+          }) (e);
+        copy(elements = elements + ((e.id, e)))
+      }
+    }
   }
   
-  private def addGrowable(growable: Element) {
+  private def removeElement(e: Element): Scene[A] = perfed("removeElement") {
+    elements.get(e.id) match {
+      case Some(_) => {
+        onElement(
+          e => elementRemoved(e),
+          (e, touching) => {
+            for ( t <- elements.get(e.touching) ) elementAdded(t)
+            viewers foreach (_ ! VisibleRemoved(e) )
+            physics.removeWorldObject(e)
+          }) (e);
+        copy(elements = elements - e.id)
+      }
+      case _ => this
+    }
+  }
+  
+  private def elementAdded(e: Element) {
+    viewers foreach (_ ! VisibleAdded(e) )
+    physics.addWorldObject(e)
+  }
+  
+  private def elementRemoved(e: Element) {
+    viewers foreach (_ ! VisibleRemoved(e) )
+    physics.removeWorldObject(e)
+  }
+  
+  private def onElement[T](whenNotTouching: Element => T, whenTouching: (Element, Element) => T)(e: Element): T = {
     if ( hideTouching ) {
-      val touching = elements.get(growable.touching)
-      // hidden faces are noted as such
+      val touching = elements.get(e.touching)
+      // hidden faces are removed from the active scene
       touching match {
-        case None    => visible += ((growable.id, growable))
-        case Some(t) => visible -= t.id ; visible -= growable.id
+        case None    => {
+          whenNotTouching(e)
+        }
+        case Some(t) => {
+          whenTouching(e, t)
+        }
       }
     } else {
-      visible += ((growable.id, growable))
+      whenNotTouching(e)
     }
-    elements += ((growable.id, growable))
   }
   
-  private def removeGrowable(id: ID) {
-    if ( hideTouching ) {
-      // revealed faces are made visible
-      for ( g <- elements.get(id); t <- elements.get(g.touching) )
-        visible += ((t.id, t))
+  def onElements[T](whenNotTouching: Element => T, whenTouching: (Element, Element) => T): Map[ID, T] = {
+    elements map { case (id, e) =>
+      (id, onElement(whenNotTouching, whenTouching)(e))
     }
-    visible -= id
-    elements -= id
   }
   
   def getElement(id: ID) = elements.get(id)
-  
-  def tick(tick: Int) {
-  }
-
 }

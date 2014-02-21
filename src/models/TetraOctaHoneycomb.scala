@@ -47,14 +47,14 @@ object TetraOctaHoneycomb {
     trait TetraOctaFace {
       def id: Int
       def opposite(i: Int, j: Int, k: Int) = id match {
-          case O_Top.id       => FaceId(i, j, k+1,   UT_Bottom)
-          case O_Bottom.id    => FaceId(i, j, k-1,   DT_Top)
-          case O_NorthEast.id => FaceId(i, j+1, k,   UT_SouthWest)
-          case O_North.id     => FaceId(i, j, k,     DT_South)
-          case O_NorthWest.id => FaceId(i-1, j+1, k, UT_SouthEast)
-          case O_SouthWest.id => FaceId(i, j-1, k,   DT_NorthEast)
-          case O_South.id     => FaceId(i, j, k,     UT_North)
-          case O_SouthEast.id => FaceId(i+1, j-1, k, DT_NorthWest)
+          case O_Top.id        => FaceId(i, j, k+1,   UT_Bottom)
+          case O_Bottom.id     => FaceId(i, j, k-1,   DT_Top)
+          case O_NorthEast.id  => FaceId(i, j+1, k,   UT_SouthWest)
+          case O_North.id      => FaceId(i, j, k,     DT_South)
+          case O_NorthWest.id  => FaceId(i-1, j+1, k, UT_SouthEast)
+          case O_SouthWest.id  => FaceId(i, j-1, k,   DT_NorthEast)
+          case O_South.id      => FaceId(i, j, k,     UT_North)
+          case O_SouthEast.id  => FaceId(i+1, j-1, k, DT_NorthWest)
           case UT_Bottom.id    => FaceId(i, j, k-1,   O_Top)
           case UT_North.id     => FaceId(i, j, k,     O_South)
           case UT_SouthEast.id => FaceId(i+1, j-1, k, O_NorthWest)
@@ -67,26 +67,26 @@ object TetraOctaHoneycomb {
     }
 
     // octahedron faces
-    object O_Top       extends Face(octaId, new Triangle(South,    East,     West)) with TetraOctaFace
-    object O_Bottom    extends Face(octaId, new Triangle(LowEast,  LowWest,  LowNorth)) with TetraOctaFace
-    object O_NorthEast extends Face(octaId, new Triangle(LowNorth, East,     LowEast)) with TetraOctaFace
-    object O_North     extends Face(octaId, new Triangle(West,     East,     LowNorth)) with TetraOctaFace
-    object O_NorthWest extends Face(octaId, new Triangle(West,     LowNorth, LowWest)) with TetraOctaFace
-    object O_SouthWest extends Face(octaId, new Triangle(West,     LowWest,  South)) with TetraOctaFace
-    object O_South     extends Face(octaId, new Triangle(South,    LowWest,  LowEast)) with TetraOctaFace
-    object O_SouthEast extends Face(octaId, new Triangle(East,     South,    LowEast)) with TetraOctaFace
+    object O_Top       extends Face(0, octaId, new Triangle(South,    East,     West)) with TetraOctaFace
+    object O_Bottom    extends Face(1, octaId, new Triangle(LowEast,  LowWest,  LowNorth)) with TetraOctaFace
+    object O_NorthEast extends Face(2, octaId, new Triangle(LowNorth, East,     LowEast)) with TetraOctaFace
+    object O_North     extends Face(3, octaId, new Triangle(West,     East,     LowNorth)) with TetraOctaFace
+    object O_NorthWest extends Face(4, octaId, new Triangle(West,     LowNorth, LowWest)) with TetraOctaFace
+    object O_SouthWest extends Face(5, octaId, new Triangle(West,     LowWest,  South)) with TetraOctaFace
+    object O_South     extends Face(6, octaId, new Triangle(South,    LowWest,  LowEast)) with TetraOctaFace
+    object O_SouthEast extends Face(7, octaId, new Triangle(East,     South,    LowEast)) with TetraOctaFace
     
     // downward tetrahedron faces
-    object DT_Top       extends Face(dTetraId, new Triangle(East,     North,    West)) with TetraOctaFace
-    object DT_South     extends Face(dTetraId, new Triangle(East,     West,     LowNorth)) with TetraOctaFace
-    object DT_NorthWest extends Face(dTetraId, new Triangle(North,    LowNorth, West)) with TetraOctaFace
-    object DT_NorthEast extends Face(dTetraId, new Triangle(North,    East,     LowNorth)) with TetraOctaFace
+    object DT_Top       extends Face(8,  dTetraId, new Triangle(East,     North,    West)) with TetraOctaFace
+    object DT_South     extends Face(9,  dTetraId, new Triangle(East,     West,     LowNorth)) with TetraOctaFace
+    object DT_NorthWest extends Face(10, dTetraId, new Triangle(North,    LowNorth, West)) with TetraOctaFace
+    object DT_NorthEast extends Face(11, dTetraId, new Triangle(North,    East,     LowNorth)) with TetraOctaFace
     
     // upward tetrahedron faces
-    object UT_Bottom    extends Face(uTetraId, new Triangle(LowWest,  LowEast,  LowSouth)) with TetraOctaFace
-    object UT_North     extends Face(uTetraId, new Triangle(South,    LowEast,  LowWest)) with TetraOctaFace
-    object UT_SouthWest extends Face(uTetraId, new Triangle(LowSouth, South,    LowWest)) with TetraOctaFace
-    object UT_SouthEast extends Face(uTetraId, new Triangle(LowEast,  South,    LowSouth)) with TetraOctaFace
+    object UT_Bottom    extends Face(12, uTetraId, new Triangle(LowWest,  LowEast,  LowSouth)) with TetraOctaFace
+    object UT_North     extends Face(13, uTetraId, new Triangle(South,    LowEast,  LowWest)) with TetraOctaFace
+    object UT_SouthWest extends Face(14, uTetraId, new Triangle(LowSouth, South,    LowWest)) with TetraOctaFace
+    object UT_SouthEast extends Face(15, uTetraId, new Triangle(LowEast,  South,    LowSouth)) with TetraOctaFace
   }
   import Faces._
     

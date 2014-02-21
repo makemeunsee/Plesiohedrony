@@ -2,8 +2,9 @@ package engine.rendering
 
 import engine.Scene
 import org.lwjgl.opengl.GL11._
+import engine.Camera
 
-class CaveRenderer(scene: Scene, w: Int, h: Int) extends DefaultRenderer(scene, w, h) {
+class CaveRenderer(camera: Camera, w: Int, h: Int) extends DefaultRenderer(camera, w, h) {
   override def init = {
     super.init
     glFrontFace(GL_CW)
