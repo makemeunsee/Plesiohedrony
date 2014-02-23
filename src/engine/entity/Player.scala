@@ -39,7 +39,7 @@ object Player {
   val no_move = new Point3f(0,0,0)
 }
 
-// TODO: split player into player + mailman + world proxy
+// TODO: split player into player + mailman / world proxy
 
 class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef) extends Actor {
   val avatar = new PlayerAvatar(id, self, name)

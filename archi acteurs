@@ -1,0 +1,32 @@
+acteurs :
+
+// côté divin
+
+Créateur
+crée l'univers, définit les règles, assure l'ordre.
+
+Metatron
+oracle de l'univers.
+
+St Pierre
+interface d'accès à l'univers, vérifie qui entre et qui sort, assigne les agents au monde adéquat.
+
+L'univers
+ensemble dynamique des mondes et leurs règles.
+
+Monde
+une partie de l'univers, régie par certaines règles, habité par des agents, connecté à d'autres mondes. source des projections.
+
+Ange
+entité qui exprime une facette de l'univers, dans un monde donné : une règle, un phénomène, une créature.
+
+// côté agents
+
+Agent
+entité libre, ayant sa projection propre. s'adresse à St Pierre dans un premier temps pour entrer dans un monde.
+
+Projection
+extrait d'un monde dédié à un agent. le monde définit ses limites par rapport à son agent. aide l'agent à appréhender le monde.
+
+Caverne
+perception d'une projection par son agent. dépend purement de l'agent.

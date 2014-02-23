@@ -75,8 +75,8 @@ class World extends Actor {
     case Player.Movement(id, vec) =>
       players.get(id) map { p =>
 	    val allowed = physics.playerMove(p, vec)
-	    p.move(allowed)
-	    players.values.map { _.ref ! Position(id, p.getXYZ) }
+        p.move(allowed)
+        players.values.map { _.ref ! Position(id, p.getXYZ) }
       }
 
     case Player.FaceAction(playerId, faceId, a) =>

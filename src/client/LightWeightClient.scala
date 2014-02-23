@@ -3,12 +3,13 @@ package client
 import com.typesafe.config.ConfigFactory
 import akka.actor.ActorSystem
 import akka.actor.Props
+import Configuration._
 
 object LightWeightClient {
 
   val cfg = ConfigFactory.load
   val system = ActorSystem("thinclient", cfg.getConfig("remote"))
-  val remotePath = "akka.tcp://plesio-system@127.0.0.1:25852/user/director"
+  val remotePath = s"akka.tcp://plesio-system@${propRemoteHost}:${propRemotePort}/user/director"
     
   def main(args: Array[String]): Unit = {
     system.actorOf(Props(classOf[DirectorProxy], remotePath), "lookupActor")

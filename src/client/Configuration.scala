@@ -5,7 +5,7 @@ import java.io.IOException
 object Configuration {
   private val cfg: java.util.Properties = {
     val props = new java.util.Properties
-    val stream = getClass getResourceAsStream "../config.properties"
+    val stream = ClassLoader.getSystemClassLoader.getResourceAsStream("config.properties")
     if (stream ne null)
       try     { props load stream }
       finally {
@@ -30,4 +30,7 @@ object Configuration {
   val propPlayerActionInterval = propOrElse("playerActionInterval", "200").toInt
   val propPlayerSpeed = propOrElse("playerSpeed", "2").toFloat / 1000f
   val propCollision = propOrElse("collision", "true").toBoolean
+
+  val propRemoteHost = propOrElse("remoteHost", "127.0.0.1")
+  val propRemotePort = propOrElse("remotePort", "25852")
 }
