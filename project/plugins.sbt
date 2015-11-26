@@ -1,3 +1,2 @@
-scalaVersion := "2.10.2"
-
-addSbtPlugin("com.github.philcali" % "sbt-lwjgl-plugin" % "3.1.5")
+lazy val root = project.in( file(".") ).dependsOn( lwjglPlugin )
+lazy val lwjglPlugin = uri("git://github.com/philcali/sbt-lwjgl-plugin")
