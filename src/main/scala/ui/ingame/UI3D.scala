@@ -12,7 +12,7 @@ import engine.World
 import org.lwjgl.input.Mouse
 import Actions._
 import UI3D._
-import engine.World.{VisibleAdded, VisibleRemoved, PlayerList, Position}
+import engine.World._
 import engine.entity.Player
 
 object Actions {
@@ -87,6 +87,7 @@ class UI3D(camera: Camera, name: String) extends Actor {
   import scala.language.reflectiveCalls
   def unmissable: Receive = {
     case VisibleRemoved(e) => renderer.visibles -= e.id
+    case VisibleUpdated(e) => renderer.visibles += ((e.id, e))
     case VisibleAdded(e) => renderer.visibles += ((e.id, e))
     
     case PlayerList(list) =>

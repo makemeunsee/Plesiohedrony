@@ -29,8 +29,9 @@ case class Scene[A <: Collidable[A]](hideTouching: Boolean,
     }
   }
 
-  def colorObject(e: Element, color: Color3B): Unit = {
+  def colorObject(e: Element, color: Color3B): Element = {
     e.setColor(color._1, color._2, color._3)
+    e
   }
   
   private def addElement(e: Element): Scene[A] = perfed("addElement") {
@@ -75,7 +76,7 @@ case class Scene[A <: Collidable[A]](hideTouching: Boolean,
   }
   
   private def onElement[T](whenNotTouching: Element => T, whenTouching: (Element, Element) => T)(e: Element): T = {
-    if ( hideTouching ) {
+    case hideTouching =>
       val touching = elements.get(e.touching)
       // hidden faces are removed from the active scene
       touching match {
@@ -85,9 +86,8 @@ case class Scene[A <: Collidable[A]](hideTouching: Boolean,
         case Some(t) =>
           whenTouching(e, t)
       }
-    } else {
+    case _ =>
       whenNotTouching(e)
-    }
   }
   
   def onElements[T](whenNotTouching: Element => T, whenTouching: (Element, Element) => T): Map[ID, T] = {

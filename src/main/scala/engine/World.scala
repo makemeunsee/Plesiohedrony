@@ -26,6 +26,7 @@ object World {
   case class PlayerList(idsAndNames: Map[Int, String])
   
   case class VisibleAdded(e: Pickable)
+  case class VisibleUpdated(e: Pickable)
   case class VisibleRemoved(e: Pickable)
   
   
@@ -83,11 +84,17 @@ class World extends Actor {
             e <- scene.getElement(faceId) ) {
         context.become(existWith(players, actions + ((playerId, lastTick))))
         a match {
-          case ADDING => scene = scene.addObject(e.growth)
-          case REMOVING => scene = scene.removeObject(e.trunk)
-          case INFO => sender ! FaceInfo(s"faceId: $faceId exists!")
-          case COLOR => scene.colorObject(e, players(playerId).color)
-          case _ => ()
+          case ADDING =>
+            scene = scene.addObject(e.growth)
+          case REMOVING =>
+            scene = scene.removeObject(e.trunk)
+          case INFO =>
+            sender ! FaceInfo(s"faceId: $faceId exists!")
+          case COLOR =>
+            val colored = scene.colorObject(e, players(playerId).color)
+            viewers foreach { _ ! VisibleUpdated(colored) }
+          case _ =>
+            ()
         }
       }
       
