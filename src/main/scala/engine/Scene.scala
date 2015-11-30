@@ -76,18 +76,19 @@ case class Scene[A <: Collidable[A]](hideTouching: Boolean,
   }
   
   private def onElement[T](whenNotTouching: Element => T, whenTouching: (Element, Element) => T)(e: Element): T = {
-    case hideTouching =>
+    if (hideTouching) {
       val touching = elements.get(e.touching)
       // hidden faces are removed from the active scene
       touching match {
-        case None    =>
+        case None =>
           whenNotTouching(e)
 
         case Some(t) =>
           whenTouching(e, t)
       }
-    case _ =>
+    } else {
       whenNotTouching(e)
+    }
   }
   
   def onElements[T](whenNotTouching: Element => T, whenTouching: (Element, Element) => T): Map[ID, T] = {
