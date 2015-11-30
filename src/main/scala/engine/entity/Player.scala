@@ -23,11 +23,11 @@ import ui.ingame.Actions
 object Player {
 
   sealed trait Activity
-  object ADDING extends Activity
-  object REMOVING extends Activity
-  object INFO extends Activity
-  object COLORING extends Activity
-  object NONE extends Activity
+  case object ADDING extends Activity
+  case object REMOVING extends Activity
+  case object INFO extends Activity
+  case object COLORING extends Activity
+  case object NONE extends Activity
 
   case object Stop
   case object JoinRequest
@@ -85,10 +85,10 @@ class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef) extends A
     
     // send actions at each tick
     case Ticker.Tick(_) =>
+      world ! Update(id, avatar.color, name)
       if ( movement != no_move ) world ! Movement(id, movement)
       pick foreach ( world ! FaceAction(id, _, activity) )
       world ! LookingAt(id, avatar.getPitch.toFloat, avatar.getYaw.toFloat)
-      world ! Update(id, avatar.color, name)
       context.become(playing(no_move, None, NONE, colorId))
 
   }
