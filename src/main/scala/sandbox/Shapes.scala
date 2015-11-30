@@ -1,9 +1,9 @@
 package sandbox
 
+import engine.rendering.Colors.Color3B
 import models.Honeycomb.Polyhedron
 import models.{Honeycomb, TetraOctaHoneycomb}
 import engine.rendering.Renderable
-import engine.rendering.Color3B
 import DefaultElement.{polyhedronToElements => pTE}
 import client.Configuration
 import models.Point3f

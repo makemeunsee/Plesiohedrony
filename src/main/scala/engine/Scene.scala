@@ -1,6 +1,7 @@
 package engine
 
-import engine.rendering.{Color3B, ColorMutation, Growable, ID}
+import engine.rendering.Colors.Color3B
+import engine.rendering.{ColorMutation, Growable, ID}
 import perf.Perf.perfed
 import models.container.Boundable
 import engine.physics.{Physics, Collidable}

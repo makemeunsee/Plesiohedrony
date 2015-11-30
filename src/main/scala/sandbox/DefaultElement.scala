@@ -1,8 +1,9 @@
 package sandbox
 
+import engine.rendering.Colors.Color3B
 import models.Honeycomb
 import Honeycomb.{Face, Polyhedron}
-import engine.rendering.{ID, Color3B}
+import engine.rendering.ID
 import perf.Perf.perfed
 import DefaultElement._
 import engine.Element

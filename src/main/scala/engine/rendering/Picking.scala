@@ -1,5 +1,6 @@
 package engine.rendering
 
+import engine.rendering.Colors.Color3B
 import org.lwjgl.opengl.GL11._
 import models.Point3f
 import util.Math.usB2sB

@@ -1,6 +1,8 @@
 package engine.rendering
 
 import engine.Camera
+import engine.entity.PlayerAvatar
+import engine.rendering.Colors.Color3B
 import models.Point3f
 import org.lwjgl.opengl.Display
 import org.lwjgl.opengl.GL11._
@@ -60,6 +62,9 @@ class DefaultRenderer(camera: Camera, w: Int, h: Int) extends Renderer(w, h) {
   var visibles = Map.empty[ID, Pickable]
   var players = Map.empty[Int, (Point3f, Float, Float)]
   var sunAngle = 0d
+  var localPlayer: Option[PlayerAvatar] = None
+
+  private var ratio = 1d
 
   // artificial ground
   val wireframes = perfed("grid floor") {
@@ -155,13 +160,13 @@ class DefaultRenderer(camera: Camera, w: Int, h: Int) extends Renderer(w, h) {
     //glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE)
 
     val nearest = 0.2f
-    val v = nearest * Display.getDisplayMode.getWidth.toDouble / Display.getDisplayMode.getHeight.toDouble
-    println("v:%f", v)
+    ratio = nearest * Display.getDisplayMode.getWidth.toDouble / Display.getDisplayMode.getHeight.toDouble
+    println("ratio:%f", ratio)
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
 
-    glFrustum(-v, v, -nearest, nearest, nearest, 110)
+    glFrustum(-ratio, ratio, -nearest, nearest, nearest, 110)
     glMatrixMode(GL_MODELVIEW)
 
     // sun light color
@@ -240,6 +245,18 @@ class DefaultRenderer(camera: Camera, w: Int, h: Int) extends Renderer(w, h) {
     glVertex3d(0, -0.01924, -1)
     glVertex3d(0.01666, 0.0096, -1)
     glVertex3d(-0.01666, 0.0096, -1)
+    glEnd()
+  }
+
+  protected def drawColorSelection(color: Color3B) {
+    glColor3ub(color._1, color._2, color._3)
+    glBegin(GL_TRIANGLES)
+    glVertex3d(-1, -1, -1)
+    glVertex3d(-0.95, -1, -1)
+    glVertex3d(-1, -0.95, -1)
+    glVertex3d(-0.95, -1, -1)
+    glVertex3d(-0.95, -0.95, -1)
+    glVertex3d(-1, -0.95, -1)
     glEnd()
   }
 
@@ -328,9 +345,10 @@ class DefaultRenderer(camera: Camera, w: Int, h: Int) extends Renderer(w, h) {
     glPolygonMode(GL_FRONT, GL_LINE)
     // triangle lime green crosshair
     crosshair()
+    glPolygonMode(GL_FRONT, GL_FILL)
+    localPlayer foreach { avatar => drawColorSelection(avatar.color) }
     glEnable(GL_LIGHTING)
     glEnable(GL_DEPTH_TEST)
-    glPolygonMode(GL_FRONT, GL_FILL)
   }
 
   private def renderGrid() {

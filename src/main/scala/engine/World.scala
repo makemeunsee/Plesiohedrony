@@ -1,15 +1,15 @@
 package engine
 
 import akka.actor.Actor
+import engine.entity.Player.{COLORING, INFO, REMOVING, ADDING}
 import sandbox.Shapes
 import engine.physics.SpherePhysics
 import akka.actor.ActorRef
 import engine.entity.Player
 import World._
 import models.Point3f
-import engine.entity.Activity._
 import client.Configuration._
-import engine.rendering.{Color3B, Pickable}
+import engine.rendering.Pickable
 import engine.entity.PlayerAvatar
 
 object World {
@@ -19,7 +19,7 @@ object World {
   
   case class FaceInfo(info: String)
   
-  case class PlayerJoin(id: Int, entity: ActorRef, name: String, color: Color3B)
+  case class PlayerJoin(id: Int, entity: ActorRef, name: String)
   case class PlayerLeave(id: Int)
   
   case class Position(id: Int, at: Point3f)
@@ -28,6 +28,7 @@ object World {
   case class VisibleAdded(e: Pickable)
   case class VisibleUpdated(e: Pickable)
   case class VisibleRemoved(e: Pickable)
+  case class LocalPlayer(avatar: PlayerAvatar)
   
   
   // sun goes one round / minute
@@ -71,6 +72,11 @@ class World extends Actor {
       lastTick = t
     
     // player actions
+    case Player.Update(id, color, name) =>
+      players.get(id) foreach { p =>
+        p.color = color
+      }
+
     case Player.Movement(id, vec) =>
       players.get(id) foreach { p =>
 	    val allowed = physics.playerMove(p, vec)
@@ -78,19 +84,19 @@ class World extends Actor {
         players.values foreach { _.ref ! Position(id, p.getXYZ) }
       }
 
-    case Player.FaceAction(playerId, faceId, a) =>
+    case Player.FaceAction(playerId, faceId, activity) =>
       for ( lastActionTick <- actions.get(playerId).orElse(Some(0l))
             if lastActionTick + actionThreshold < lastTick;
             e <- scene.getElement(faceId) ) {
         context.become(existWith(players, actions + ((playerId, lastTick))))
-        a match {
+        activity match {
           case ADDING =>
             scene = scene.addObject(e.growth)
           case REMOVING =>
             scene = scene.removeObject(e.trunk)
           case INFO =>
             sender ! FaceInfo(s"faceId: $faceId exists!")
-          case COLOR =>
+          case COLORING =>
             val colored = scene.colorObject(e, players(playerId).color)
             viewers foreach { _ ! VisibleUpdated(colored) }
           case _ =>
@@ -101,8 +107,10 @@ class World extends Actor {
     case Player.LookingAt(playerId, pitch, yaw) =>
       players.values.filter(_.id != playerId) foreach { _.ref ! Player.LookingAt(playerId, pitch, yaw) }
     
-    case PlayerJoin(id, playerRef, name, color) =>
-      val newPlayers = players + ((id, new PlayerAvatar(id, playerRef, name, color)))
+    case PlayerJoin(id, playerRef, name) =>
+      val avatar = new PlayerAvatar(id, playerRef, name)
+      val newPlayers = players + ((id, avatar))
+
       val idsAndNames = newPlayers map { case (newId, p) => (newId, p.name) }
       context.become(existWith(newPlayers, actions))
       newPlayers foreach { case (_, p) =>

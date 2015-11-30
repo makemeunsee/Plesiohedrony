@@ -6,14 +6,13 @@ import Director._
 import akka.actor.ActorRef
 import engine.entity.Player
 import akka.actor.Cancellable
-import engine.rendering.Color3B
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object Director {
   case class AcceptJoin(id: Int, worldRef: ActorRef, tickerRef: ActorRef)
   case class Welcome(msg: String)
-  case class PlayerJoin(id: Int, name: String, playerRef: ActorRef, color: Color3B)
+  case class PlayerJoin(id: Int, name: String, playerRef: ActorRef)
   case class PlayerLeave(id: Int)
   case object Stop
   
@@ -59,10 +58,10 @@ class Director extends Actor {
       players.get(id) foreach ( ticker ! Ticker.StopSynchro(_) )
       world ! World.PlayerLeave(id)
       
-    case PlayerJoin(id, name, playerRef, color) =>
+    case PlayerJoin(id, name, playerRef) =>
       pendings.get(id) foreach (_.cancel())
       context.become(managePlayers(players + ((id, playerRef)), pendings - id))
       // add player to the world
-      world ! World.PlayerJoin(id, playerRef, name, color)
+      world ! World.PlayerJoin(id, playerRef, name)
   }
 }

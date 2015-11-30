@@ -1,11 +1,9 @@
 package ui.ingame
 
 import akka.actor.Actor
-import engine.rendering.ID
-import engine.entity.Activity._
+import engine.rendering._
 import engine.Camera
 import client.Configuration.{propWidth, propHeight, propFullscreen, propFramerate}
-import engine.rendering.DefaultRenderer
 import org.lwjgl.opengl.{Display, DisplayMode}
 import org.lwjgl.input.Keyboard
 import engine.World
@@ -14,10 +12,15 @@ import Actions._
 import UI3D._
 import engine.World._
 import engine.entity.Player
+import engine.entity.Player.Activity
+import engine.entity.Player.NONE
+import engine.entity.Player.ADDING
+import engine.entity.Player.REMOVING
+import engine.entity.Player.COLORING
 
 object Actions {
   case class Picked(id: ID, a: Activity)
-  case object ExitRequest
+  object ExitRequest
   case class Move(forward: Boolean,
       backward: Boolean,
       left: Boolean,
@@ -26,6 +29,8 @@ object Actions {
       down: Boolean,
       speed: Boolean,
       duration: Long)
+  object ChangeColorNext
+  object ChangeColorPrevious
 } 
 
 private object UI3D {
@@ -42,7 +47,7 @@ class UI3D(camera: Camera, name: String) extends Actor {
   private var finished = false
   
   // viewer / controller interacttion
-  private var mode = NONE
+  private var mode: Activity = NONE
   private var fullscreenSwitchRequested = false
   
   // controller state
@@ -89,7 +94,8 @@ class UI3D(camera: Camera, name: String) extends Actor {
     case VisibleRemoved(e) => renderer.visibles -= e.id
     case VisibleUpdated(e) => renderer.visibles += ((e.id, e))
     case VisibleAdded(e) => renderer.visibles += ((e.id, e))
-    
+    case LocalPlayer(avatar) => renderer.localPlayer = Some(avatar)
+
     case PlayerList(list) =>
       renderer.players = renderer.players.filter { case (oId, _) => list.contains(oId) }
       list foreach { case (oId, oName) => println(s"$oName, $oId") }
@@ -166,6 +172,8 @@ class UI3D(camera: Camera, name: String) extends Actor {
   def inputs(spentMS: Long) {
     import locale.Keys._
     import Keyboard.isKeyDown
+
+    val wheel = Mouse.getDWheel
     
     if (Display.isCloseRequested || isKeyDown(ESC)) {
       context.parent ! ExitRequest
@@ -174,6 +182,10 @@ class UI3D(camera: Camera, name: String) extends Actor {
     } else if (Keyboard.isKeyDown(USE)) {
       // toggle mouse grab
       Mouse.setGrabbed(!Mouse.isGrabbed)
+    } else if (wheel < 0) {
+      context.parent ! ChangeColorNext
+    } else if (wheel > 0) {
+      context.parent ! ChangeColorPrevious
     } else {
       val fwd = isKeyDown(FORWARD)
       val bwd = isKeyDown(BACK)
@@ -198,7 +210,7 @@ class UI3D(camera: Camera, name: String) extends Actor {
         else if (Mouse.isButtonDown(1))
           REMOVING
         else if (Mouse.isButtonDown(2))
-          COLOR
+          COLORING
         else
           NONE
       if (activity != mode) {

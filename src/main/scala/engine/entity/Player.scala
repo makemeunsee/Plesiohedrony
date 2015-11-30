@@ -1,6 +1,8 @@
 package engine.entity
 
 import engine.Camera
+import engine.World.LocalPlayer
+import engine.rendering.Colors.Color3B
 import models.container.{Boundable, Bounds}
 import scala.math.Pi
 import models.Point3f
@@ -8,7 +10,7 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import Player._
 import akka.actor.Props
-import engine.rendering.{Color3B, ID}
+import engine.rendering.{Colors, ID}
 import engine.World
 import client.Configuration
 import engine.Ticker
@@ -16,21 +18,20 @@ import engine.Director
 import ui.ingame.UI3D
 
 
-object Activity extends Enumeration {
-  type Activity = Value
-  val ADDING = Value("ADD")
-  val REMOVING = Value("REM")
-  val INFO = Value("INF")
-  val COLOR = Value("COLOR")
-  val NONE = Value("NON")
-}
-
-import Activity._
 import ui.ingame.Actions
 
 object Player {
+
+  sealed trait Activity
+  object ADDING extends Activity
+  object REMOVING extends Activity
+  object INFO extends Activity
+  object COLORING extends Activity
+  object NONE extends Activity
+
   case object Stop
   case object JoinRequest
+  case class Update(playerId: Int, color: Color3B, name: String)
   case class Movement(playerId: Int, move: Point3f)
   case class LookingAt(playerId: Int, pitch: Float, yaw: Float)
   case class FaceAction(playerId: Int, faceId: ID, activity: Activity)
@@ -40,31 +41,43 @@ object Player {
 
 // TODO: split player into player + mailman / world proxy
 
-class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef, color: Color3B) extends Actor {
-  val avatar = new PlayerAvatar(id, self, name, color)
+class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef) extends Actor {
+  val avatar = new PlayerAvatar(id, self, name)
   val ui = context.actorOf(Props(classOf[UI3D], avatar, name), "ui3d")
 
   override def preStart() {
     world ! World.AddViewer(ui)
     ticker ! Ticker.HighRateSynchro(self)
+    ui ! LocalPlayer(avatar)
   }
   
-  override def receive = playing(no_move, None, NONE)
+  override def receive = playing(no_move, None, NONE, 0)
     
-  def playing(movement: Point3f, pick: Option[ID], activity: Activity): Receive = {
+  def playing(movement: Point3f, pick: Option[ID], activity: Activity, colorId: Int): Receive = {
     // director stop the game
     case Director.Stop => context.parent ! Director.Stop
     // player exits the game
     case Actions.ExitRequest => context.parent ! Stop
     
     // collect actions
-    case a: Actions.Move =>
-      val vec = handleMovement(a)
-      context.become(playing(movement + vec, pick, activity))
+    case mov: Actions.Move =>
+      val vec = handleMovement(mov)
+      context.become(playing(movement + vec, pick, activity, colorId))
       avatar.move(vec)
-    case Actions.Picked(faceId, a) =>
-      context.become(playing(movement, Some(faceId), a))
-    
+    case Actions.Picked(faceId, newActivity) =>
+      context.become(playing(movement, Some(faceId), newActivity, colorId))
+
+    case Actions.ChangeColorNext =>
+      val newColorId = Colors.nextId(colorId)
+      avatar.color = Colors(newColorId)
+      ui ! LocalPlayer(avatar)
+      context.become(playing(movement, pick, activity, newColorId))
+    case Actions.ChangeColorPrevious =>
+      val newColorId = Colors.prevId(colorId)
+      avatar.color = Colors(newColorId)
+      ui ! LocalPlayer(avatar)
+      context.become(playing(movement, pick, activity, newColorId))
+
     case pos: World.Position => if ( pos.id != id) ui ! pos else avatar.setXYZ(pos.at.x, pos.at.y, pos.at.z)
     case look: LookingAt => if ( look.playerId != id) ui ! look
     case l: World.PlayerList => ui ! l
@@ -75,7 +88,8 @@ class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef, color: Co
       if ( movement != no_move ) world ! Movement(id, movement)
       pick foreach ( world ! FaceAction(id, _, activity) )
       world ! LookingAt(id, avatar.getPitch.toFloat, avatar.getYaw.toFloat)
-      context.become(playing(no_move, None, NONE))
+      world ! Update(id, avatar.color, name)
+      context.become(playing(no_move, None, NONE, colorId))
 
   }
 
@@ -112,11 +126,13 @@ class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef, color: Co
   }
 }
 
-class PlayerAvatar(val id: Int, val ref: ActorRef, val name: String, val color: Color3B)
+class PlayerAvatar(val id: Int, val ref: ActorRef, val name: String)
     extends Camera(Pi / 2d,0,0,0,0) with Boundable {
 
   val radius = 0.5f
   val squareRadius = radius*radius
+
+  var color: Color3B = Colors(0)
   
   def move(mv: Point3f) {
     setXYZ(getX + mv.x, getY + mv.y, getZ + mv.z)
