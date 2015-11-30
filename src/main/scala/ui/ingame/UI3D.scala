@@ -191,7 +191,15 @@ class UI3D(camera: Camera, name: String) extends Actor {
               fast,
               spentMS)
       }
-      val activity = if (Mouse.isButtonDown(0)) ADDING else if (Mouse.isButtonDown(1)) REMOVING else if (Mouse.isButtonDown(2)) INFO else NONE
+      val activity =
+        if (Mouse.isButtonDown(0))
+          ADDING
+        else if (Mouse.isButtonDown(1))
+          REMOVING
+        else if (Mouse.isButtonDown(2))
+          COLOR
+        else
+          NONE
       if (activity != mode) {
         mode = activity
       }

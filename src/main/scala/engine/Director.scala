@@ -6,18 +6,20 @@ import Director._
 import akka.actor.ActorRef
 import engine.entity.Player
 import akka.actor.Cancellable
+import engine.rendering.Color3B
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 object Director {
   case class AcceptJoin(id: Int, worldRef: ActorRef, tickerRef: ActorRef)
   case class Welcome(msg: String)
-  case class PlayerJoin(id: Int, name: String, playerRef: ActorRef)
+  case class PlayerJoin(id: Int, name: String, playerRef: ActorRef, color: Color3B)
   case class PlayerLeave(id: Int)
   case object Stop
   
   case class Timeout(id: Int)
   
-  val connectionTimeout = 1.second
+  val connectionTimeout = 1 second
 }
 
 class Director extends Actor {
@@ -33,8 +35,7 @@ class Director extends Actor {
   // TODO change to PRNG
   val ids = Stream.from(0).iterator
   
-  override def receive = managePlayers(players = Map.empty[Int, ActorRef],
-      pendings = Map.empty[Int, Cancellable])
+  override def receive = managePlayers(players = Map.empty[Int, ActorRef], pendings = Map.empty[Int, Cancellable])
   
   def managePlayers(players: Map[Int, ActorRef], pendings: Map[Int, Cancellable]): Receive = {
     case Stop =>
@@ -58,10 +59,10 @@ class Director extends Actor {
       players.get(id) foreach ( ticker ! Ticker.StopSynchro(_) )
       world ! World.PlayerLeave(id)
       
-    case PlayerJoin(id, name, playerRef) =>
+    case PlayerJoin(id, name, playerRef, color) =>
       pendings.get(id) foreach (_.cancel())
       context.become(managePlayers(players + ((id, playerRef)), pendings - id))
       // add player to the world
-      world ! World.PlayerJoin(id, playerRef, name)
+      world ! World.PlayerJoin(id, playerRef, name, color)
   }
 }

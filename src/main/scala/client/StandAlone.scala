@@ -34,8 +34,9 @@ class StandAlone extends Actor {
   override def receive = {
     case Director.AcceptJoin(id, world, ticker) =>
       val name = "alice"
-      localPlayer = Some(context.actorOf(Props(classOf[Player], id, name, world, ticker), s"player_$name"))
-      sender ! Director.PlayerJoin(id, name, localPlayer.get)
+      val color: (Byte, Byte, Byte) = (-1, 0, 0)
+      localPlayer = Some(context.actorOf(Props(classOf[Player], id, name, world, ticker, color), s"player_$name"))
+      sender ! Director.PlayerJoin(id, name, localPlayer.get, color)
 
     case Player.Stop => Perf.printResults() ; localDirector ! Director.Stop ; system.stop(self) ; system.terminate()
   }

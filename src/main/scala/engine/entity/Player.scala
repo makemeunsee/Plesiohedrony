@@ -8,7 +8,7 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import Player._
 import akka.actor.Props
-import engine.rendering.ID
+import engine.rendering.{Color3B, ID}
 import engine.World
 import client.Configuration
 import engine.Ticker
@@ -21,6 +21,7 @@ object Activity extends Enumeration {
   val ADDING = Value("ADD")
   val REMOVING = Value("REM")
   val INFO = Value("INF")
+  val COLOR = Value("COLOR")
   val NONE = Value("NON")
 }
 
@@ -39,8 +40,8 @@ object Player {
 
 // TODO: split player into player + mailman / world proxy
 
-class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef) extends Actor {
-  val avatar = new PlayerAvatar(id, self, name)
+class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef, color: Color3B) extends Actor {
+  val avatar = new PlayerAvatar(id, self, name, color)
   val ui = context.actorOf(Props(classOf[UI3D], avatar, name), "ui3d")
 
   override def preStart() {
@@ -111,7 +112,7 @@ class Player(id: Int, name: String, world: ActorRef, ticker: ActorRef) extends A
   }
 }
 
-class PlayerAvatar(val id: Int, val ref: ActorRef, val name: String)
+class PlayerAvatar(val id: Int, val ref: ActorRef, val name: String, val color: Color3B)
     extends Camera(Pi / 2d,0,0,0,0) with Boundable {
 
   val radius = 0.5f

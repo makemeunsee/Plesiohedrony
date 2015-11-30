@@ -9,7 +9,7 @@ import World._
 import models.Point3f
 import engine.entity.Activity._
 import client.Configuration._
-import engine.rendering.Pickable
+import engine.rendering.{Color3B, Pickable}
 import engine.entity.PlayerAvatar
 
 object World {
@@ -19,7 +19,7 @@ object World {
   
   case class FaceInfo(info: String)
   
-  case class PlayerJoin(id: Int, entity: ActorRef, name: String)
+  case class PlayerJoin(id: Int, entity: ActorRef, name: String, color: Color3B)
   case class PlayerLeave(id: Int)
   
   case class Position(id: Int, at: Point3f)
@@ -86,6 +86,7 @@ class World extends Actor {
           case ADDING => scene = scene.addObject(e.growth)
           case REMOVING => scene = scene.removeObject(e.trunk)
           case INFO => sender ! FaceInfo(s"faceId: $faceId exists!")
+          case COLOR => scene.colorObject(e, players(playerId).color)
           case _ => ()
         }
       }
@@ -93,8 +94,8 @@ class World extends Actor {
     case Player.LookingAt(playerId, pitch, yaw) =>
       players.values.filter(_.id != playerId) foreach { _.ref ! Player.LookingAt(playerId, pitch, yaw) }
     
-    case PlayerJoin(id, playerRef, name) =>
-      val newPlayers = players + ((id, new PlayerAvatar(id, playerRef, name)))
+    case PlayerJoin(id, playerRef, name, color) =>
+      val newPlayers = players + ((id, new PlayerAvatar(id, playerRef, name, color)))
       val idsAndNames = newPlayers map { case (newId, p) => (newId, p.name) }
       context.become(existWith(newPlayers, actions))
       newPlayers foreach { case (_, p) =>

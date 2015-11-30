@@ -87,7 +87,11 @@ case class DefaultElement(i: Int, j: Int, k: Int, face: Face,
     (faceId.i, faceId.j, faceId.k, faceId.face.id)
   }
 
-  def color = GREY
+  private var colorVar = GREY
+
+  def color = colorVar
+
+  def setColor(color3B: Color3B): Unit = colorVar = color3B
   
   private def boundingCube = {
     val bounds = positionedPolygon.foldLeft((Float.MaxValue, Float.MinValue, Float.MaxValue, Float.MinValue, Float.MaxValue, Float.MinValue)) {
@@ -116,7 +120,6 @@ case class DefaultElement(i: Int, j: Int, k: Int, face: Face,
 class ScaledElement(i: Int, j: Int, k: Int, face: Face,
     polyhedronCenter: Point3f, distanceToPolyhedronCenter: Float,
     origin: Point3f, honeycomb: Honeycomb, scale: Float)
-    
     extends DefaultElement(i, j, k, face,
         polyhedronCenter, distanceToPolyhedronCenter,
         origin, honeycomb) {

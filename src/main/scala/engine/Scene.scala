@@ -1,6 +1,6 @@
 package engine
 
-import rendering.{Growable, ID}
+import engine.rendering.{Color3B, ColorMutation, Growable, ID}
 import perf.Perf.perfed
 import models.container.Boundable
 import engine.physics.{Physics, Collidable}
@@ -9,15 +9,14 @@ import scala.collection.mutable
 import akka.actor.ActorRef
 import engine.World.{VisibleAdded, VisibleRemoved}
 
-trait Element extends Boundable with Growable[Element]
+trait Element extends Boundable with Growable[Element] with ColorMutation
 
 case class Scene[A <: Collidable[A]](hideTouching: Boolean,
-                                       physics: Physics[A],
-                                       viewers: mutable.Set[ActorRef],
-                                       elements: Map[ID, Element] = new HashMap[ID, Element])
-                                       (implicit elementToA: Element => A) {
+                                     physics: Physics[A],
+                                     viewers: mutable.Set[ActorRef],
+                                     elements: Map[ID, Element] = new HashMap[ID, Element])
+                                     (implicit elementToA: Element => A) {
 
-  
   def addObject(o: Iterable[Element]): Scene[A] = {
     o.foldLeft(this) { case (lastScene, element) =>
       lastScene.addElement(element)
@@ -28,6 +27,10 @@ case class Scene[A <: Collidable[A]](hideTouching: Boolean,
     o.flatMap(getElement).foldLeft(this) { case (lastScene, element) =>
       lastScene.removeElement(element)
     }
+  }
+
+  def colorObject(e: Element, color: Color3B): Unit = {
+    e.setColor(color._1, color._2, color._3)
   }
   
   private def addElement(e: Element): Scene[A] = perfed("addElement") {
