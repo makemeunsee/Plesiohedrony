@@ -58,7 +58,7 @@ class DirectorProxy(path: String) extends Actor {
     case Director.Welcome(msg) => println(msg)
     
     case Director.AcceptJoin(id, world, ticker) =>
-      val name = "bob"
+      val name = Configuration.propOrElse("playerName", "bob")
       val color: (Byte, Byte, Byte) = (0, 0, -1)
       val player = context.actorOf(Props(classOf[Player], id, name, world, ticker, color), s"player_${name}_$id")
       context.become(active(actor, Some((id, player))))

@@ -15,7 +15,7 @@ object Configuration {
     props
   }
 
-  private def propOrElse(name: String, alt: String): String = cfg.getProperty(name, alt)
+  def propOrElse(name: String, alt: String): String = cfg.getProperty(name, alt)
 
   val propFullscreen = propOrElse("fullscreen", "false").toBoolean
   val propWidth = propOrElse("width", "800").toInt
