@@ -35,12 +35,17 @@ class Director extends Actor {
   val ids = Stream.from(0).iterator
   
   override def receive = managePlayers(players = Map.empty[Int, ActorRef], pendings = Map.empty[Int, Cancellable])
+
+  def stopped: Receive = {
+    case _ =>
+  }
   
   def managePlayers(players: Map[Int, ActorRef], pendings: Map[Int, Cancellable]): Receive = {
     case Stop =>
       players foreach { _._2 ! Stop }
       world ! Stop
       ticker ! Ticker.Stop
+      context.become(stopped)
     
     case Player.JoinRequest =>
       sender ! Welcome("yolo")

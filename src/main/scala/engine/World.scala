@@ -1,6 +1,6 @@
 package engine
 
-import akka.actor.Actor
+import akka.persistence._
 import engine.entity.Player.{COLORING, INFO, REMOVING, ADDING}
 import sandbox.Shapes
 import engine.physics.SpherePhysics
@@ -9,7 +9,7 @@ import engine.entity.Player
 import World._
 import models.Point3f
 import client.Configuration._
-import engine.rendering.Pickable
+import engine.rendering._
 import engine.entity.PlayerAvatar
 
 object World {
@@ -39,7 +39,9 @@ object World {
   val startPosition = new Point3f(0,0,0)
 }
 
-class World extends Actor {
+class World extends PersistentActor {
+
+  override def persistenceId = "plesiohedrony-world"
 
   import scala.collection.mutable.Set
   val viewers = Set.empty[ActorRef]
@@ -54,15 +56,30 @@ class World extends Actor {
   override def preStart() {
     setupScene()
   }
+
+  val receiveRecover: Receive = {
+    case SnapshotOffer(_, elementsSnapshot: Map[ID, Element]) =>
+      println("recovering")
+      scene = scene.copy(elements = elementsSnapshot)
+    case RecoveryCompleted =>
+    case _ =>
+  }
   
-  override def receive = existWith(Map.empty, Map.empty)
-  
+  val receiveCommand = existWith(Map.empty, Map.empty)
+
   def existWith(players: Map[Int, PlayerAvatar], actions: Map[Int, Long]): Receive = {
+
+    case SaveSnapshotSuccess(metadata)         => println("success")
+    case SaveSnapshotFailure(metadata, reason) => println("failure", reason)
+
     // set up / tear down viewers
     case AddViewer(viewer) => registerViewer(viewer)
     case RemoveViewer(viewer) => viewers -= viewer
     
-    case Director.Stop => viewers.clear()
+    case Director.Stop =>
+      viewers.clear()
+      println("snapshotting")
+      saveSnapshot(scene.elements)
     
     // universal clock
     case Ticker.Tick(t) =>
