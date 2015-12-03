@@ -91,7 +91,10 @@ class World extends Actor {
         context.become(existWith(players, actions + ((playerId, lastTick))))
         activity match {
           case ADDING =>
-            scene = scene.addObject(e.growth)
+            val color = players(playerId).color
+            val newObject = e.growth
+            newObject foreach ( _.setColor(color) )
+            scene = scene.addObject( newObject )
           case REMOVING =>
             scene = scene.removeObject(e.trunk)
           case INFO =>
