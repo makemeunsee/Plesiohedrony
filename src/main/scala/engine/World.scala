@@ -60,7 +60,10 @@ class World extends PersistentActor {
   val receiveRecover: Receive = {
     case SnapshotOffer(_, elementsSnapshot: Map[ID, Element]) =>
       println("recovering")
-      scene = scene.copy(elements = elementsSnapshot)
+      scene = scene
+        .removeObject(scene.elements.keys)
+        .addObject(elementsSnapshot.values)
+
     case RecoveryCompleted =>
     case _ =>
   }
@@ -68,9 +71,6 @@ class World extends PersistentActor {
   val receiveCommand = existWith(Map.empty, Map.empty)
 
   def existWith(players: Map[Int, PlayerAvatar], actions: Map[Int, Long]): Receive = {
-
-    case SaveSnapshotSuccess(metadata)         => println("success")
-    case SaveSnapshotFailure(metadata, reason) => println("failure", reason)
 
     // set up / tear down viewers
     case AddViewer(viewer) => registerViewer(viewer)
