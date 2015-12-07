@@ -113,7 +113,10 @@ class World extends PersistentActor {
             newObject foreach ( _.setColor(color) )
             scene = scene.addObject( newObject )
           case REMOVING =>
-            scene = scene.removeObject(e.trunk)
+            val obj = e.trunk.toSeq
+            if(scene.elements.size > obj.size) {
+              scene = scene.removeObject(obj)
+            }
           case INFO =>
             sender ! FaceInfo(s"faceId: $faceId exists!")
           case COLORING =>
