@@ -71,24 +71,18 @@ class MOctreeNode[T <: Boundable](val center: (Int, Int, Int), val depth: Int)
       children match {
         case Some(kids) => {
           kids.map(_.removeValue(t))
-          for (kid <- kids)
-            if (!kid.empty)
-              return this
-          vChildren = None
+          if (kids.forall(_.empty)) {
+            vChildren = None
+          }
         }
-        case _ => this
+        case _ => ()
       }
     this
   }
 
   def empty: Boolean = children match {
-    case Some(kids) => {
-      for (kid <- kids)
-        if (!kid.empty)
-          return false
-      true
-    }
-    case _ => true
+    case Some(kids) => kids.forall(_.empty)
+    case _          => true
   }
 
   private def createChildren[T <: Boundable](

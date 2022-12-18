@@ -38,19 +38,19 @@ object Demo extends Tickable {
     import Perf.perfed
 
     // fill scene
-    Shapes.heavyBubble.foreach(scene.addElement)
-    perfed("beautybubble") {
-      Shapes.beautyBubble.foreach(scene.addElement)
-    }
+    // Shapes.heavyBubble.foreach(scene.addElement)
+    // perfed("beautybubble") {
+    //   Shapes.beautyBubble.foreach(scene.addElement)
+    // }
 //    perfed("grid floor") {
 //      Shapes.gridFloor(20).foreach(scene.addWireframe)
 //    }
-//    Shapes.floor(10, 0).foreach(scene.addElement)
-//    Shapes.at(0,0,0).foreach(scene.addElement)
-//    Shapes.at(1,1,1).foreach(scene.addElement)
-//    Shapes.at(2,3,4).foreach(scene.addElement)
-//    Shapes.at(5,6,7).foreach(scene.addElement)
-//    Shapes.at(8,6,4).foreach(scene.addElement)
+    Shapes.floor(10, 0).foreach(scene.addElement)
+    Shapes.at(0, 0, 0).foreach(scene.addElement)
+    Shapes.at(1, 1, 1).foreach(scene.addElement)
+    Shapes.at(2, 3, 4).foreach(scene.addElement)
+    Shapes.at(5, 6, 7).foreach(scene.addElement)
+    Shapes.at(8, 6, 4).foreach(scene.addElement)
     // perfed("dome") {
     //   Shapes.dome(10).foreach(scene.addElement)
     // }
@@ -70,7 +70,7 @@ object Demo extends Tickable {
         sunAngle -= 0.004f
       }
 
-      def render: Unit = {
+      def render(): Unit = {
         glPushMatrix
 
         val sunX = summerFactor * sunDistance * sin(sunAngle).toFloat
@@ -108,7 +108,7 @@ object Demo extends Tickable {
       val x = moonDistance * sin(angle).toFloat
       val y = moonDistance * cos(angle).toFloat
 
-      def render: Unit = {
+      def render(): Unit = {
         glPushMatrix
 
         glTranslatef(x, 0, y)
@@ -133,7 +133,7 @@ object Demo extends Tickable {
     scene.translationlessRenderables.add(moon)
     scene.translationlessRenderables.add(sun)
 
-    run
+    run()
   }
 
   def init(fullscreen: Boolean): Unit = {
@@ -154,7 +154,7 @@ object Demo extends Tickable {
     Display.setVSyncEnabled(true)
     Display.create
 
-    renderer.init
+    renderer.init()
   }
 
   def cleanup(): Unit = {
@@ -177,17 +177,17 @@ object Demo extends Tickable {
     var lastActivity = System.currentTimeMillis
     var lastUpdate = lastActivity
 
-    Ticker.start
+    Ticker.start()
     while (!finished) {
 
       Display.update
 
       if (Keyboard.isKeyDown(Keys.FULLSCREEN)) {
-        Ticker.pause
+        Ticker.pause()
         println("switching fullscreen / window")
         Display.destroy
         init(!Display.isFullscreen)
-        Ticker.unpause
+        Ticker.unpause()
       }
       val update = System.currentTimeMillis
       logic(scene.camera, update - lastUpdate)
@@ -209,7 +209,7 @@ object Demo extends Tickable {
       Display.sync(propFramerate)
     }
     Ticker.exiting = true
-    Perf.printResults
+    Perf.printResults()
   }
 
   def tick(t: Int): Unit = {

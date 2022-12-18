@@ -6,51 +6,57 @@ import scala.collection.mutable.HashSet
 
 // yaw: angle between (0,0,-1) and eyeVector
 // pitch: angle between plan(y = 0) and eyeVector
-class Camera(private var yaw: Double, private var pitch: Double, private var x: Float, private var y: Float, private var z: Float) {
-  
-  def applyToWorld {
-    rotateWorld
-    translateWorld
+class Camera(
+    private var yaw: Double,
+    private var pitch: Double,
+    private var x: Float,
+    private var y: Float,
+    private var z: Float
+) {
+
+  def applyToWorld(): Unit = {
+    rotateWorld()
+    translateWorld()
   }
-  
-  def rotateWorld {
+
+  def rotateWorld(): Unit = {
     glRotatef(yaw.toDegrees.toFloat, -1f, 0, 0)
     glRotatef(pitch.toDegrees.toFloat, 0, 0, 1f)
   }
-  
-  def translateWorld {
+
+  def translateWorld(): Unit = {
     glTranslatef(-x, -y, -z)
   }
-  
-  def position = new Point3f(x,y,z)
-  
+
+  def position = new Point3f(x, y, z)
+
   def getX = x
   def getY = y
   def getZ = z
-  
-  def setXYZ(newX: Float, newY: Float, newZ: Float) {
+
+  def setXYZ(newX: Float, newY: Float, newZ: Float): Unit = {
     x = newX
     y = newY
     z = newZ
   }
-  
+
   def getPitch = pitch
   def getYaw = yaw
-  
-  def setPitchAndYaw(newPitch: Double, newYaw: Double) {
+
+  def setPitchAndYaw(newPitch: Double, newYaw: Double): Unit = {
     pitch = newPitch
     yaw = newYaw
     if (yaw > math.Pi) yaw = math.Pi
     else if (yaw < 0) yaw = 0
-    if (pitch >= 2*math.Pi) pitch -= 2*math.Pi
-    else if (pitch < 0) pitch += 2*math.Pi
-    //updateEyeVector
+    if (pitch >= 2 * math.Pi) pitch -= 2 * math.Pi
+    else if (pitch < 0) pitch += 2 * math.Pi
+    // updateEyeVector
   }
-  
+
 //  def getEyeVector = eyeVector
-//  
+//
 //  private var eyeVector = new Point3f(0,0,0)
-//  
+//
 //  import scala.math.{cos, sin}
 //  import perf.Perf.perfed
 //  private def updateEyeVector = perfed("updateEyeVector") {

@@ -1,15 +1,15 @@
 package models.container
 
 import scala.math.Numeric
-import util.Geometry.{boundingCube, cubeBounds} 
+import util.Geometry.{boundingCube, cubeBounds}
 
 object Octree {
   val maxDepth = 15
   // width of a leaf
   val minWidth = 2
   // width of the cube-shaped space covered by an octree
-  val width = 2*math.pow(2, maxDepth).toInt
-  
+  val width = 2 * math.pow(2, maxDepth).toInt
+
   def zerokid[T <: Boundable] = List[Octree[T]]()
 }
 import Octree._
@@ -17,7 +17,7 @@ import Octree._
 // immutable octree
 trait Octree[T <: Boundable] {
   import scala.collection.Set
-  
+
   def depth: Int
   def center: (Int, Int, Int)
   def bounds: Bounds = cubeBounds(center, width / 2)

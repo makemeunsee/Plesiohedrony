@@ -25,7 +25,7 @@ class Scene(hideTouching: Boolean) extends Tickable {
   val visible = new mutable.HashMap[ID, Element]
   val translationlessRenderables = new mutable.HashSet[SpecialRenderable]
 
-  def addWireframe(drawable: Renderable) {
+  def addWireframe(drawable: Renderable): Unit = {
     wireframes += drawable
   }
 
@@ -70,7 +70,7 @@ class Scene(hideTouching: Boolean) extends Tickable {
   val decayChance = Configuration.propDecayRate
   val lifeRate = 10000
 
-  def tick(tick: Int) {
+  def tick(tick: Int): Unit = {
     val mod = tick % 5
     if (Configuration.propGrowth && mod == 0) {
       for (e <- visible.values)

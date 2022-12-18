@@ -13,9 +13,9 @@ package object rendering {
     def toTriangles: Iterable[(Point3f, Point3f, Point3f)]
     def toContour: Iterable[Point3f]
   }
-  
+
   trait SpecialRenderable {
-    def render
+    def render(): Unit
   }
 
   // convex polygonal face

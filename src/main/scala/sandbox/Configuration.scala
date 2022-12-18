@@ -1,27 +1,31 @@
 package sandbox
 
 import java.io.{File, IOException}
+import scala.io.Source
 
 object Configuration {
   private val cfg: java.util.Properties = {
     val props = new java.util.Properties
-    val stream = getClass getResourceAsStream "../config.properties"
+    val stream = Source.fromResource("config.properties").reader()
     if (stream ne null)
-      try     { props load stream }
+      try { props load stream }
       finally {
-        try     { stream.close }
-        catch   { case e: IOException => e.printStackTrace}
+        try { stream.close }
+        catch { case e: IOException => e.printStackTrace }
       }
     props
   }
 
-  private def propOrElse(name: String, alt: String): String = cfg.getProperty(name, alt)
+  private def propOrElse(name: String, alt: String): String =
+    cfg.getProperty(name, alt)
 
   val propFullscreen = propOrElse("fullscreen", "false").toBoolean
   val propWidth = propOrElse("width", "800").toInt
   val propHeight = propOrElse("height", "600").toInt
   val propFramerate = propOrElse("framerate", "60").toInt
-  val propHoneycomb = Class.forName(s"models.${propOrElse("honeycomb", "BitruncatedCubic")}Honeycomb")
+  val propHoneycomb = Class.forName(
+    s"models.${propOrElse("honeycomb", "BitruncatedCubic")}Honeycomb"
+  )
   val propGrowth = propOrElse("growth", "true").toBoolean
   val propGrowthRate = propOrElse("growthRate", "1.3").toFloat
   val propDecay = propOrElse("decay", "true").toBoolean
