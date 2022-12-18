@@ -8,15 +8,15 @@ import perf.Perf.perfed
 import models.container.{Boundable, Bounds, Octree}
 import engine.entity.Player
 import models.container.immutable.OctreeNode
-import models.container.immutable.MOctreeNode
+import models.container.mutable.MOctreeNode
 import sandbox.Configuration
 
 trait Element extends Boundable with Growable[Element]
 
 class Scene(hideTouching: Boolean) extends Tickable {
 
-  var octree: Octree[Element] = new OctreeNode[Element]((0,0,0), 0)
-  
+  var octree: Octree[Element] = new OctreeNode[Element]((0, 0, 0), 0)
+
   val player = new Player(this)
   val camera = player
 
@@ -28,13 +28,13 @@ class Scene(hideTouching: Boolean) extends Tickable {
   def addWireframe(drawable: Renderable) {
     wireframes += drawable
   }
-  
+
   def addElement(e: Element) = perfed("addElement") {
-    if ( hideTouching ) {
+    if (hideTouching) {
       val touching = elements.get(e.touching)
       // hidden faces are removed from the active scene
       touching match {
-        case None    => {
+        case None => {
           visible += ((e.id, e))
           octree += e
         }
@@ -49,38 +49,38 @@ class Scene(hideTouching: Boolean) extends Tickable {
     }
     elements += ((e.id, e))
   }
-  
+
   def removeElement(id: ID) = perfed("removeElement") {
-    if ( hideTouching ) {
+    if (hideTouching) {
       // revealed faces are made visible
-      for ( g <- elements.get(id); t <- elements.get(g.touching) ) {
+      for (g <- elements.get(id); t <- elements.get(g.touching)) {
         visible += ((t.id, t))
         octree += t
       }
     }
     visible -= id
-    for ( e <- elements.get(id) )
+    for (e <- elements.get(id))
       octree -= e
     elements -= id
   }
-  
+
   def getElement(id: ID) = elements.get(id)
-  
+
   val growChance = Configuration.propGrowthRate
   val decayChance = Configuration.propDecayRate
   val lifeRate = 10000
-  
+
   def tick(tick: Int) {
     val mod = tick % 5
-    if( Configuration.propGrowth && mod == 0 ) {
-      for ( e <- visible.values )
-        if ( math.random * lifeRate < growChance )
-          for ( g <- e.growth )
+    if (Configuration.propGrowth && mod == 0) {
+      for (e <- visible.values)
+        if (math.random * lifeRate < growChance)
+          for (g <- e.growth)
             addElement(g)
-    } else if ( Configuration.propDecay && mod == 4 ) {
-      for ( e <- elements.values )
-        if ( math.random * lifeRate < decayChance )
-          for ( id <- e.trunk )
+    } else if (Configuration.propDecay && mod == 4) {
+      for (e <- elements.values)
+        if (math.random * lifeRate < decayChance)
+          for (id <- e.trunk)
             removeElement(id)
     }
   }
